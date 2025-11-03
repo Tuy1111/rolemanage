@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<view xmlns="http://jmix.io/schema/flowui/view"
+      title="msg://resourceRoleEditView.title">
+    <data>
+        <instance id="roleModelDc"
+                  class="io.jmix.security.model.ResourceRoleModel">
+            <fetchPlan extends="_base">
+                <property name="resourcePolicies" fetchPlan="_base"/>
+            </fetchPlan>
+            <collection id="resourcePoliciesDc" property="resourcePolicies"/>
+        </instance>
+        <collection id="childRolesDc" class="io.jmix.security.model.ResourceRoleModel"/>
+    </data>
+    <facets>
+        <dataLoadCoordinator auto="true"/>
+    </facets>
+    <layout>
+    </layout>
+</view>

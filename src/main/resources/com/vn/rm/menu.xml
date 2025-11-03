@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<menu-config xmlns="http://jmix.io/schema/flowui/menu">
+    <item view="ext_sec_ResourceRoleModel.list"
+          description="msg://com.vn.rm/menu_config.ext_sec_ResourceRoleModel.list.description"
+          title="msg://com.vn.rm/menu_config.ext_sec_ResourceRoleModel.list.title" icon="vaadin:abacus"/>
+    <menu id="application" title="msg://com.vn.rm/menu.application.title" opened="true">
+        <item view="rm_User.list" title="msg://com.vn.rm.view.user/UserListView.title"/>
+    </menu>
+
+
+</menu-config>
