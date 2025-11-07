@@ -2,6 +2,7 @@ package com.vn.rm.view.rolesystem;
 
 import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.RouteParameters;
 import com.vn.rm.view.rolemanage.ResourceRoleEditView;
 import io.jmix.flowui.ViewNavigators;
 import io.jmix.flowui.component.grid.DataGrid;
@@ -29,9 +30,13 @@ public class ExtResourceRoleModelListView extends ResourceRoleModelListView {
     @Subscribe("roleModelsTable.editCustomRole")
     public void onRoleModelsTableEditCustomRole(final ActionPerformedEvent event) {
         ResourceRoleModel roleModel = roleModelsTable.getSingleSelectedItem();
-
+        if (roleModel != null) {
         viewNavigators.view(this,ResourceRoleEditView.class)
+                .withRouteParameters(new RouteParameters("code", roleModel.getCode()))
                 .navigate();
+        }
     }
+
+
 
 }

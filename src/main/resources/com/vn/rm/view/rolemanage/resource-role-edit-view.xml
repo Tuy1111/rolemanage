@@ -1,19 +1,62 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <view xmlns="http://jmix.io/schema/flowui/view"
-      title="msg://resourceRoleEditView.title">
+      title="msg://rm_ResourceRoleEditView.title"
+      focusComponent="formRole">
+
     <data>
         <instance id="roleModelDc"
                   class="io.jmix.security.model.ResourceRoleModel">
-            <fetchPlan extends="_base">
-                <property name="resourcePolicies" fetchPlan="_base"/>
-            </fetchPlan>
             <collection id="resourcePoliciesDc" property="resourcePolicies"/>
         </instance>
+
         <collection id="childRolesDc" class="io.jmix.security.model.ResourceRoleModel"/>
+        <instance id="resourcePolicyModelDc"
+                  class="io.jmix.security.model.ResourcePolicyModel"/>
+        <collection id="policyTreeDc" class="com.vn.rm.entity.PolicyGroupNode"/>
     </data>
+
     <facets>
+        <settings auto="true"/>
         <dataLoadCoordinator auto="true"/>
     </facets>
-    <layout>
+
+    <actions>
+        <action id="saveAction" type="detail_saveClose"/>
+        <action id="closeAction" type="detail_close"/>
+    </actions>
+
+    <layout alignItems="STRETCH" padding="false" spacing="false">
+
+        <vbox id="roleBox" classNames="overflow-auto" padding="true" spacing="true">
+            <h3>Role Information</h3>
+            <formLayout id="formRole" dataContainer="roleModelDc">
+                <textField id="nameField" property="name"/>
+                <textField id="sourceField" property="source" readOnly="true"/>
+                <textField id="codeField" property="code" readOnly="true"/>
+                <checkboxGroup id="scopesField" property="scopes" required="true"/>
+                <textArea id="descriptionField" property="description" height="9.5em"/>
+            </formLayout>
+        </vbox>
+
+        <vbox id="policyBox" classNames="overflow-auto" padding="true" spacing="true">
+            <h3>Resource Policies (Tree)</h3>
+            <treeDataGrid id="policyTreeGrid"
+                          dataContainer="policyTreeDc"
+                          hierarchyProperty="parent"
+                          width="100%"
+                          minHeight="35em">
+                <columns>
+                    <column property="name" header="Policy Group / Resource"/>
+                    <column property="type" header="Type"/>
+                    <column property="action" header="Action"/>
+                    <column property="effect" header="Effect"/>
+                </columns>
+            </treeDataGrid>
+        </vbox>
+
+        <hbox id="detailActions" classNames="px-m py-s bg-contrast-5">
+            <button id="saveAndCloseBtn" action="saveAction" themeNames="primary"/>
+            <button id="closeBtn" action="closeAction"/>
+        </hbox>
     </layout>
 </view>
