@@ -10,6 +10,8 @@ import io.jmix.flowui.Notifications;
 
 import io.jmix.flowui.component.grid.TreeDataGrid;
 import io.jmix.flowui.kit.action.ActionPerformedEvent;
+import io.jmix.flowui.menu.MenuConfig;
+import io.jmix.flowui.menu.MenuItem;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.model.DataContext;
 import io.jmix.flowui.model.InstanceContainer;
@@ -43,6 +45,8 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
     private ResourcePolicyViewUtils resourcePolicyViewUtils;
     @Autowired
     private ViewRegistry viewRegistry;
+    @Autowired
+    private MenuConfig menuConfig;
 
     @ViewComponent
     private InstanceContainer<ResourceRoleModel> roleModelDc;
@@ -57,7 +61,7 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
     public void beforeEnter(BeforeEnterEvent event) {
         String code = event.getRouteParameters().get("code").orElse(null);
         if (code == null) {
-            notifications.create("⚠️ Không có route parameter 'code'").show();
+            notifications.create(" Không có route parameter 'code'").show();
             return;
         }
 
@@ -95,7 +99,7 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
     /** ✅ Merge annotated + DB role */
     private ResourceRoleModel mergeAnnotatedAndDbRole(ResourceRole annotatedRole, Optional<ResourceRoleEntity> dbEntityOpt, String code) {
         if (annotatedRole == null && dbEntityOpt.isEmpty()) {
-            notifications.create("⚠️ Không tìm thấy role có code: " + code).show();
+            notifications.create(" Không tìm thấy role có code: " + code).show();
             return null;
         }
 
@@ -159,18 +163,16 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
         return model;
     }
 
-    /** ✅ Build tree auto theo package thật từ ViewRegistry */
+    /** Build tree View Access + Menu Access */
     private void buildTree(ResourceRoleModel model) {
-        System.out.println("=== BUILD TREE (AUTO PACKAGE) ===");
+        System.out.println("=== BUILD TREE (AUTO PACKAGE + MENU) ===");
 
         PolicyGroupNode viewRoot = new PolicyGroupNode("View Access", true);
         PolicyGroupNode menuRoot = new PolicyGroupNode("Menu Access", true);
 
         Map<String, String> views = resourcePolicyViewUtils.getViewsOptionsMap(false);
-        Map<String, String> menus = resourcePolicyViewUtils.getMenuItemOptionsMap();
 
         System.out.println("Views count: " + views.size());
-        System.out.println("Menus count: " + menus.size());
 
         // 🔹 Lấy id -> class name từ ViewRegistry
         Map<String, String> idToClass = new HashMap<>();
@@ -180,10 +182,9 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
             }
         });
 
-        // 🔹 Tạo cây View Access
+        // 🔹 Build View Access
         for (String viewId : views.keySet()) {
             if (viewId == null || viewId.isBlank()) continue;
-
             String className = idToClass.getOrDefault(viewId, viewId);
             String[] parts = className.split("\\.");
 
@@ -205,7 +206,6 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
                 }
             }
 
-            // node cuối (View)
             String simpleName = parts[parts.length - 1];
             PolicyGroupNode leaf = new PolicyGroupNode(simpleName, false);
             leaf.setResource(viewId);
@@ -215,17 +215,16 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
             currentParent.getChildren().add(leaf);
         }
 
-        // 🔹 Menu Access
-        for (Map.Entry<String, String> entry : menus.entrySet()) {
-            PolicyGroupNode leaf = new PolicyGroupNode(entry.getKey(), false);
-            leaf.setResource(entry.getValue());
-            leaf.setAction("view");
-            leaf.setType("MENU");
-            leaf.setParent(menuRoot);
-            menuRoot.getChildren().add(leaf);
+        // 🔹 Build Menu Access từ menuConfig
+        for (MenuItem root : menuConfig.getRootItems()) {
+            PolicyGroupNode rootNode = new PolicyGroupNode(root.getId(), true);
+            rootNode.setType("MENU");
+            rootNode.setParent(menuRoot);
+            menuRoot.getChildren().add(rootNode);
+            buildMenuSubTree(rootNode, root);
         }
 
-        // 🔹 Map & đánh dấu quyền
+        // 🔹 Map để đánh dấu quyền Allow/Deny
         Map<String, PolicyGroupNode> allLeafs = new HashMap<>();
         collectLeafNodes(viewRoot, allLeafs);
         collectLeafNodes(menuRoot, allLeafs);
@@ -254,6 +253,26 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
         printTree(menuRoot, "  ");
     }
 
+    /**  Đệ quy build cây menu thật */
+    private void buildMenuSubTree(PolicyGroupNode parentNode, MenuItem menuItem) {
+        for (MenuItem child : menuItem.getChildren()) {
+            if (child.getChildren().isEmpty()) {
+                PolicyGroupNode leaf = new PolicyGroupNode(child.getId(), false);
+                leaf.setResource(child.getId());
+                leaf.setType("MENU");
+                leaf.setAction("view");
+                leaf.setParent(parentNode);
+                parentNode.getChildren().add(leaf);
+            } else {
+                PolicyGroupNode folder = new PolicyGroupNode(child.getId(), true);
+                folder.setType("MENU");
+                folder.setParent(parentNode);
+                parentNode.getChildren().add(folder);
+                buildMenuSubTree(folder, child);
+            }
+        }
+    }
+
     private void collectLeafNodes(PolicyGroupNode node, Map<String, PolicyGroupNode> map) {
         if (!Boolean.TRUE.equals(node.getGroup()) && node.getResource() != null) {
             map.put(node.getResource(), node);
@@ -270,6 +289,7 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
         }
     }
 
+    /**  Setup Tree Grid UI */
     private void setupTreeGrid(String source) {
         policyTreeGrid.removeAllColumns();
         boolean editable = "DATABASE".equalsIgnoreCase(source);
