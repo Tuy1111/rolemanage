@@ -1,19 +1,76 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <view xmlns="http://jmix.io/schema/flowui/view"
       title="msg://resourceRoleEditView.title">
+
     <data>
-        <instance id="roleModelDc"
-                  class="io.jmix.security.model.ResourceRoleModel">
+        <instance id="roleModelDc" class="io.jmix.security.model.ResourceRoleModel">
             <fetchPlan extends="_base">
                 <property name="resourcePolicies" fetchPlan="_base"/>
             </fetchPlan>
             <collection id="resourcePoliciesDc" property="resourcePolicies"/>
         </instance>
+
+        <!-- Ma trận quyền theo entity -->
+        <collection id="entityMatrixDc" class="com.vn.rm.view.rolemanage.EntityMatrixRow"/>
+        <collection id="attrMatrixDc" class="com.vn.rm.view.rolemanage.AttrMatrixRow"/>
         <collection id="childRolesDc" class="io.jmix.security.model.ResourceRoleModel"/>
     </data>
+
     <facets>
+        <settings auto="true"/>
         <dataLoadCoordinator auto="true"/>
     </facets>
-    <layout>
+
+    <actions>
+        <action id="saveAction" type="detail_saveClose"/>
+        <action id="closeAction" type="detail_close"/>
+    </actions>
+
+    <!-- Mở rộng theo splitter để 2 bảng chiếm trọn chiều cao còn lại -->
+    <layout expand="split">
+        <vbox id="contentBox" width="100%" padding="false" spacing="false">
+            <formLayout id="form" dataContainer="roleModelDc" width="100%">
+                <textField id="nameField" property="name" required="true" themeNames="small"/>
+                <textField id="sourceField" property="source" readOnly="true" themeNames="small"/>
+                <textField id="codeField" property="code" readOnly="true" themeNames="small"/>
+                <checkboxGroup id="scopesField" property="scopes" required="true" themeNames="small helper-above-field"/>
+                <textArea id="descriptionField" property="description" height="6em" themeNames="small"/>
+            </formLayout>
+        </vbox>
+
+        <split id="split" width="100%" height="100%" themeNames="splitter-spacing" splitterPosition="60">
+            <vbox width="100%" height="100%" expand="entityMatrixTable">
+                <h3 text="Entities permissions"/>
+                <dataGrid id="entityMatrixTable" dataContainer="entityMatrixDc" width="100%" height="100%" themeNames="compact">
+                    <columns resizable="true">
+                        <column property="entityCaption" header="Entity" width="320px"/>
+                        <column key="allowAllCol" header="Allow all"/>
+                        <column key="createCol" header="Create"/>
+                        <column key="readCol" header="Read"/>
+                        <column key="updateCol" header="Update"/>
+                        <column key="deleteCol" header="Delete"/>
+                        <column key="attributesCol" header="Attributes" width="160px"/>
+                    </columns>
+                </dataGrid>
+            </vbox>
+
+            <vbox width="100%" height="100%" expand="attrMatrixTable">
+                <h3 text="Attributes Permissions"/>
+                <span id="attrEntityLabel"/>
+                <dataGrid id="attrMatrixTable" dataContainer="attrMatrixDc" width="100%" height="100%" themeNames="compact">
+                    <columns resizable="true">
+                        <column property="attribute" header="Attribute" width="320px"/>
+                        <column key="viewCol" header="View"/>
+                        <column key="modifyCol" header="Modify"/>
+                    </columns>
+                </dataGrid>
+            </vbox>
+        </split>
+
+
+        <!-- Actions -->
+        <hbox id="detailActions" classNames="px-m py-s bg-contrast-5">
+            <button id="saveAndCloseBtn" action="saveAction"/>
+            <button id="closeBtn" action="closeAction"/>
+        </hbox>
     </layout>
 </view>

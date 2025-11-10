@@ -33,6 +33,7 @@
             <button id="createCustomRoleBtn" action="roleModelsTable.createCustomRole"/>
             <button id="editCustomRoleBtn" action="roleModelsTable.editCustomRole"/>
         </hbox>
+
         <dataGrid id="roleModelsTable"
                   dataContainer="roleModelsDc"
                   minHeight="20em"
