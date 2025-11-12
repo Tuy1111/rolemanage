@@ -114,10 +114,10 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
         allowAllViews.addValueChangeListener(e -> {
             if (Boolean.TRUE.equals(e.getValue())) {
                 toggleAll(true);
-                notifications.create("✅ All views allowed").show();
+                notifications.create(" All views allowed").show();
             } else {
                 toggleAll(null);
-                notifications.create("↺ Reset all permissions to DENY").show();
+                notifications.create(" Reset all permissions to DENY").show();
             }
         });
 
@@ -149,10 +149,10 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
     private void onSaveClick(ClickEvent<Button> event) {
         try {
             saveToDatabase();
-            notifications.create("✅ Đã lưu quyền thành công!").show();
+            notifications.create(" Đã lưu quyền thành công!").show();
         } catch (Exception e) {
             e.printStackTrace();
-            notifications.create("❌ Lỗi khi lưu: " + e.getMessage()).show();
+            notifications.create(" Lỗi khi lưu: " + e.getMessage()).show();
         }
     }
     private void saveToDatabase() {
@@ -169,7 +169,7 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
                 .orElse(null);
 
         if (entity == null) {
-            notifications.create("❌ Không tìm thấy role trong database để cập nhật").show();
+            notifications.create(" Không tìm thấy role trong database để cập nhật").show();
             return;
         }
 
@@ -224,7 +224,6 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
             updatedList.removeIf(p -> "*".equals(p.getResource()));
         }
 
-        // ✅ Cuối cùng: chỉ save entity chính (role), không create lại
         dataManager.save(entity);
     }
 
