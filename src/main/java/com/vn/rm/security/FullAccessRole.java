@@ -2,8 +2,8 @@ package com.vn.rm.security;
 
 import com.vn.rm.entity.HoangAnh;
 import com.vn.rm.entity.User;
-import com.vn.rm.view.rolemanage.AttrMatrixRow;
-import com.vn.rm.view.rolemanage.EntityMatrixRow;
+import com.vn.rm.view.rolemanage.entityfragment.AttrMatrixRow;
+import com.vn.rm.view.rolemanage.entityfragment.EntityMatrixRow;
 import io.jmix.core.entity.KeyValueEntity;
 import io.jmix.datatoolsflowui.view.entityinfo.model.InfoValue;
 import io.jmix.flowui.component.genericfilter.model.FilterConfigurationModel;

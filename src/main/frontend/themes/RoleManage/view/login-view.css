@@ -1,5 +1,9 @@
 /* Predefined styles for the LoginView */
 
+/*.jmix-login-main-layout {*/
+/*  background-color: var(--lumo-shade-5pct);*/
+/*}*/
+
 .jmix-login-main-layout {
-  background-color: var(--lumo-shade-5pct);
+    background-color: var(--lumo-shade-5pct);
 }

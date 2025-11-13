@@ -1,4 +1,4 @@
-package com.vn.rm.view.rolemanage;
+package com.vn.rm.view.rolemanage.entityfragment;
 
 import io.jmix.core.entity.annotation.JmixGeneratedValue;
 import io.jmix.core.entity.annotation.JmixId;
