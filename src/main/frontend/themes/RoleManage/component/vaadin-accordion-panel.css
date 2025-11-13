@@ -1,0 +1,32 @@
+/* Target the accordion panel's content area */
+/*vaadin-accordion-panel {*/
+/*    !* Ensure the content area can transition *!*/
+/*    overflow: hidden;*/
+/*}*/
+
+vaadin-accordion-panel[opened] {
+    /* When the panel is opened, set a max-height large enough for content */
+    max-height: 1000px; /* Adjust based on your content */
+    transition: max-height 0.3s ;
+    border-left: solid 2px #fbc1c1;
+    border-radius: 8px;
+}
+
+vaadin-accordion-panel:not([opened]) {
+    /* When closed, collapse the content */
+    max-height: 50px;
+    transition: max-height 0.3s ;
+}
+
+/* Optional: Style the heading for better visuals */
+
+vaadin-accordion-heading {
+    background: #fff3f3;
+    border-left: solid 2px #fbc1c1;
+    padding: 5px;
+
+}
+vaadin-accordion-heading:hover {
+    background: #fbc1c1;
+
+}
