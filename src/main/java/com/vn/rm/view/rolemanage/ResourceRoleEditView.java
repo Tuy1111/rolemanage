@@ -18,6 +18,8 @@ import io.jmix.security.model.*;
 import io.jmix.security.role.ResourceRoleRepository;
 import io.jmix.securitydata.entity.ResourcePolicyEntity;
 import io.jmix.securitydata.entity.ResourceRoleEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
@@ -28,6 +30,8 @@ import java.util.stream.Collectors;
 @ViewDescriptor("resource-role-edit-view.xml")
 @EditedEntityContainer("roleModelDc")
 public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> {
+
+    private static final Logger log = LoggerFactory.getLogger(ResourceRoleEditView.class);
 
     // ============================= UI components =============================
 
@@ -49,6 +53,9 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
     // Fragment UI/Menu tree
     @ViewComponent
     private UserInterfaceFragment userInterfaceFragment;
+
+    // Lưu policies để set vào fragment sau khi fragment sẵn sàng
+    private List<ResourcePolicyModel> pendingPolicies = null;
 
 
     // ================================ Services ===============================
@@ -78,11 +85,21 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
 
     @Subscribe
     public void onReady(ReadyEvent event) {
-        if (entitiesFragment != null)
-            entitiesFragment.reloadFromPolicies();
+        log.info("=== ResourceRoleEditView.onReady() ===");
+        // Không gọi reloadFromPolicies ở đây vì dữ liệu chưa được load
+        // Sẽ được gọi trong initExistingEntity sau khi load dữ liệu từ DB
 
         if (userInterfaceFragment != null && roleModelDc.getItem() != null)
             userInterfaceFragment.initUi(roleModelDc.getItem());
+        
+        // Nếu có pending policies, set vào fragment
+        if (entitiesFragment != null && pendingPolicies != null) {
+            log.info("Fragment ready, applying {} pending policies", pendingPolicies.size());
+            entitiesFragment.initPolicies(pendingPolicies);
+            pendingPolicies = null;
+        } else if (pendingPolicies != null) {
+            log.warn("Fragment still not ready, {} policies still pending", pendingPolicies.size());
+        }
     }
 
     // ============================ Load role ============================
@@ -111,6 +128,8 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
         }
 
         ResourceRoleModel model = mapDbRoleToModel(roleEntity);
+        log.info("=== ResourceRoleEditView.initExistingEntity() ===");
+        log.info("Loaded role: code={}, name={}", model.getCode(), model.getName());
 
         childRolesDc.setItems(loadChildRoleModels(model));
 
@@ -122,9 +141,20 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
                         : Collections.emptyList()
         );
 
-        // sync lại matrix fragment
-        if (entitiesFragment != null)
-            entitiesFragment.reloadFromPolicies();
+        // sync lại matrix fragment - set dữ liệu vào container của fragment
+        List<ResourcePolicyModel> policies = model.getResourcePolicies() != null
+                ? new ArrayList<>(model.getResourcePolicies())
+                : Collections.emptyList();
+        log.info("Total policies loaded from DB: {}", policies.size());
+        
+        if (entitiesFragment != null) {
+            log.info("Fragment is ready, calling initPolicies() with {} policies", policies.size());
+            entitiesFragment.initPolicies(policies);
+        } else {
+            log.warn("Fragment is NOT ready, saving {} policies as pending", policies.size());
+            // Lưu lại để set sau khi fragment sẵn sàng
+            pendingPolicies = policies;
+        }
 
         // sync lại UI/Menu fragment
         if (userInterfaceFragment != null)
