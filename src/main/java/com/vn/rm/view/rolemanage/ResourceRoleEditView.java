@@ -42,11 +42,11 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
     @ViewComponent
     private CollectionContainer<ResourcePolicyModel> resourcePoliciesDc;
 
-    // fragment mới chứa 2 bảng entity + attribute
+    // Fragment matrix ENTITY + ATTR
     @ViewComponent
     private EntitiesFragment entitiesFragment;
 
-    // fragment tree UI/Menu
+    // Fragment UI/Menu tree
     @ViewComponent
     private UserInterfaceFragment userInterfaceFragment;
 
@@ -73,28 +73,27 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
 
     @Subscribe
     public void onInit(InitEvent event) {
-        // scopes cho role
         scopesField.setItems(Arrays.asList(SecurityScope.UI, SecurityScope.API));
-        // phần build cột bảng / ma trận đã chuyển hết sang EntitiesFragment
     }
 
     @Subscribe
     public void onReady(ReadyEvent event) {
-        // Sau khi dữ liệu đã được load xong -> yêu cầu fragment sync ma trận lại từ resourcePoliciesDc
-        if (entitiesFragment != null) {
+        if (entitiesFragment != null)
             entitiesFragment.reloadFromPolicies();
-        }
+
+        if (userInterfaceFragment != null && roleModelDc.getItem() != null)
+            userInterfaceFragment.initUi(roleModelDc.getItem());
     }
 
-    // ============================ Load / Save ============================
+    // ============================ Load role ============================
 
     @Override
     protected void initExistingEntity(String serializedEntityCode) {
         String code = null;
         try {
             code = urlParamSerializer.deserialize(String.class, serializedEntityCode);
-        } catch (Exception ignore) {
-        }
+        } catch (Exception ignore) {}
+
         if (Strings.isNullOrEmpty(code)) {
             close(StandardOutcome.CLOSE);
             return;
@@ -113,23 +112,26 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
 
         ResourceRoleModel model = mapDbRoleToModel(roleEntity);
 
-        // child roles
         childRolesDc.setItems(loadChildRoleModels(model));
-        // merge vào DataContext
+
         roleModelDc.setItem(dataContext.merge(model));
 
-        // gán resource policies vào container (để fragment đọc)
         resourcePoliciesDc.setItems(
                 model.getResourcePolicies() != null
                         ? new ArrayList<>(model.getResourcePolicies())
                         : Collections.emptyList()
         );
 
-        // lúc load xong, nếu fragment đã sẵn sàng thì cho nó refresh ma trận
-        if (entitiesFragment != null) {
+        // sync lại matrix fragment
+        if (entitiesFragment != null)
             entitiesFragment.reloadFromPolicies();
-        }
+
+        // sync lại UI/Menu fragment
+        if (userInterfaceFragment != null)
+            userInterfaceFragment.initUi(model);
     }
+
+    // ============================ SAVE ============================
 
     @Subscribe("saveAction")
     public void onSaveAction(ActionPerformedEvent event) {
@@ -137,19 +139,36 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
         if (model == null)
             return;
 
-        // Lấy các policy không phải entity / attr
-        List<ResourcePolicyModel> nonEntityPolicies = Optional.ofNullable(model.getResourcePolicies())
-                .orElseGet(ArrayList::new)
-                .stream()
-                .filter(p -> p.getType() != ResourcePolicyType.ENTITY
-                        && p.getType() != ResourcePolicyType.ENTITY_ATTRIBUTE)
-                .collect(Collectors.toList());
+        List<ResourcePolicyModel> nonEntityPolicies =
+                Optional.ofNullable(model.getResourcePolicies())
+                        .orElseGet(ArrayList::new)
+                        .stream()
+                        .filter(p -> p.getType() != ResourcePolicyType.ENTITY
+                                && p.getType() != ResourcePolicyType.ENTITY_ATTRIBUTE)
+                        .collect(Collectors.toList());
 
-        // Lấy policies entity + attr từ fragment
         List<ResourcePolicyModel> matrixPolicies =
                 entitiesFragment != null
                         ? entitiesFragment.buildPoliciesFromMatrix()
                         : List.of();
+
+        // ADD UI/MENU policies từ UserInterfaceFragment
+        if (userInterfaceFragment != null) {
+            nonEntityPolicies.addAll(
+                    userInterfaceFragment.collectPoliciesFromTree()
+            );
+
+            // add '*' allow all nếu checkbox bật
+            if (userInterfaceFragment.isAllowAllViewsChecked()) {
+                ResourcePolicyModel all = new ResourcePolicyModel();
+                all.setType("VIEW");
+                all.setResource("*");
+                all.setAction("view");
+                all.setEffect("ALLOW");
+                all.setId(UUID.randomUUID());
+                nonEntityPolicies.add(all);
+            }
+        }
 
         nonEntityPolicies.addAll(matrixPolicies);
         model.setResourcePolicies(nonEntityPolicies);
@@ -161,33 +180,53 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
     @Subscribe(target = Target.DATA_CONTEXT)
     public void onBeforeSave(DataContext.PreSaveEvent event) {
         ResourceRoleModel model = roleModelDc.getItem();
-        if (model == null)
-            return;
+        if (model == null) return;
 
-        List<ResourcePolicyModel> nonEntityPolicies = Optional.ofNullable(model.getResourcePolicies())
-                .orElseGet(ArrayList::new)
-                .stream()
-                .filter(p -> p.getType() != ResourcePolicyType.ENTITY
-                        && p.getType() != ResourcePolicyType.ENTITY_ATTRIBUTE)
-                .collect(Collectors.toList());
+        List<ResourcePolicyModel> nonEntityPolicies =
+                Optional.ofNullable(model.getResourcePolicies())
+                        .orElseGet(ArrayList::new)
+                        .stream()
+                        .filter(p -> p.getType() != ResourcePolicyType.ENTITY
+                                && p.getType() != ResourcePolicyType.ENTITY_ATTRIBUTE)
+                        .collect(Collectors.toList());
 
         List<ResourcePolicyModel> matrixPolicies =
                 entitiesFragment != null
                         ? entitiesFragment.buildPoliciesFromMatrix()
                         : List.of();
 
+        // UI/Menu policies
+        if (userInterfaceFragment != null) {
+            nonEntityPolicies.addAll(
+                    userInterfaceFragment.collectPoliciesFromTree()
+            );
+
+            if (userInterfaceFragment.isAllowAllViewsChecked()) {
+                ResourcePolicyModel all = new ResourcePolicyModel();
+                all.setType("VIEW");
+                all.setResource("*");
+                all.setAction("view");
+                all.setEffect("ALLOW");
+                all.setId(UUID.randomUUID());
+                nonEntityPolicies.add(all);
+            }
+        }
+
         nonEntityPolicies.addAll(matrixPolicies);
         model.setResourcePolicies(nonEntityPolicies);
     }
 
-    // ======================= Utils & persistence =========================
+    // ============================ MAP DB → MODEL ============================
 
     private ResourceRoleModel mapDbRoleToModel(ResourceRoleEntity roleEntity) {
         ResourceRoleModel m = metadata.create(ResourceRoleModel.class);
         m.setCode(roleEntity.getCode());
         m.setName(roleEntity.getName());
         m.setDescription(roleEntity.getDescription());
-        m.setScopes(roleEntity.getScopes() == null ? Collections.emptySet() : new HashSet<>(roleEntity.getScopes()));
+        m.setScopes(roleEntity.getScopes() == null ? Set.of() : new HashSet<>(roleEntity.getScopes()));
+
+        // ⭐ FIX NullPointerException — luôn set source
+        m.setSource(RoleSourceType.DATABASE);
 
         if (roleEntity.getResourcePolicies() != null) {
             List<ResourcePolicyModel> ps = roleEntity.getResourcePolicies().stream().map(pe -> {
@@ -204,10 +243,12 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
         return m;
     }
 
+    // ============================ DB SAVE ============================
+
     private void persistRoleToDb(ResourceRoleModel model) {
         String code = model.getCode();
         if (Strings.isNullOrEmpty(code)) {
-            throw new IllegalStateException("Code của role không được rỗng.");
+            throw new IllegalStateException("Code không được rỗng.");
         }
 
         ResourceRoleEntity role = dataManager.load(ResourceRoleEntity.class)
@@ -264,12 +305,8 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
 
         io.jmix.core.SaveContext ctx = new io.jmix.core.SaveContext();
         ctx.saving(role);
-        for (ResourcePolicyEntity pe : toPersistOrUpdate) {
-            ctx.saving(pe);
-        }
-        for (ResourcePolicyEntity pe : toRemove) {
-            ctx.removing(pe);
-        }
+        toPersistOrUpdate.forEach(ctx::saving);
+        toRemove.forEach(ctx::removing);
         dataManager.save(ctx);
     }
 
@@ -281,11 +318,10 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
                 Objects.toString(group, ""));
     }
 
-    // ============================= Helpers ===============================
-
     private List<ResourceRoleModel> loadChildRoleModels(ResourceRoleModel edited) {
         if (edited.getChildRoles() == null || edited.getChildRoles().isEmpty())
             return Collections.emptyList();
+
         return edited.getChildRoles().stream()
                 .map(roleRepository::findRoleByCode)
                 .filter(Objects::nonNull)
