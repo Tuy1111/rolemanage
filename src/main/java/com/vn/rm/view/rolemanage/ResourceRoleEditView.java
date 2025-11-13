@@ -68,6 +68,9 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
     @ViewComponent
     private Button saveBtn;
 
+    // ====================================================================================
+    // BEFORE ENTER
+    // ====================================================================================
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         String code = event.getRouteParameters().get("code").orElse(null);
@@ -114,16 +117,17 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
         allowAllViews.addValueChangeListener(e -> {
             if (Boolean.TRUE.equals(e.getValue())) {
                 toggleAll(true);
-                notifications.create(" All views allowed").show();
+                notifications.create("All views allowed").show();
             } else {
-                toggleAll(null);
-                notifications.create(" Reset all permissions to DENY").show();
+                toggleAll(false);
+                notifications.create("Reset all permissions to DENY").show();
             }
         });
 
         saveBtn.addClickListener(this::onSaveClick);
     }
 
+    // Convert DB entity → Model
     private ResourceRoleModel convertDbEntityToModel(ResourceRoleEntity dbEntity) {
         ResourceRoleModel model = new ResourceRoleModel();
         model.setId(dbEntity.getId());
@@ -146,22 +150,25 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
         return model;
     }
 
+    // ====================================================================================
+    // SAVE
+    // ====================================================================================
     private void onSaveClick(ClickEvent<Button> event) {
         try {
             saveToDatabase();
-            notifications.create(" Đã lưu quyền thành công!").show();
+            notifications.create("Đã lưu quyền thành công!").show();
         } catch (Exception e) {
             e.printStackTrace();
-            notifications.create(" Lỗi khi lưu: " + e.getMessage()).show();
+            notifications.create("Lỗi khi lưu: " + e.getMessage()).show();
         }
     }
+
     private void saveToDatabase() {
         ResourceRoleModel role = roleModelDc.getItem();
         if (role == null) return;
 
         List<ResourcePolicyModel> newPolicies = collectPoliciesFromTree();
 
-        // ✅ load entity thật từ DB để merge, tránh create lại
         ResourceRoleEntity entity = dataManager.load(ResourceRoleEntity.class)
                 .query("select r from sec_ResourceRoleEntity r where r.code = :code")
                 .parameter("code", role.getCode())
@@ -169,7 +176,7 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
                 .orElse(null);
 
         if (entity == null) {
-            notifications.create(" Không tìm thấy role trong database để cập nhật").show();
+            notifications.create("Không tìm thấy role trong database để cập nhật").show();
             return;
         }
 
@@ -227,8 +234,7 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
         dataManager.save(entity);
     }
 
-
-
+    // Collect policies from tree
     private List<ResourcePolicyModel> collectPoliciesFromTree() {
         List<ResourcePolicyModel> list = new ArrayList<>();
         for (PolicyGroupNode root : policyTreeDc.getItems())
@@ -250,45 +256,21 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
             collectPoliciesRecursive(child, list);
     }
 
+    // ====================================================================================
+    // ⭐⭐⭐ BUILD TREE (Views + Menu + Compress folder)
+    // ====================================================================================
     private void buildTree(ResourceRoleModel model) {
+
         PolicyGroupNode viewRoot = new PolicyGroupNode("View Access", true);
         PolicyGroupNode menuRoot = new PolicyGroupNode("Menu Access", true);
 
-        Map<String, String> views = resourcePolicyViewUtils.getViewsOptionsMap(false);
-        Map<String, String> idToClass = new HashMap<>();
-        viewRegistry.getViewInfos().forEach(info -> {
-            if (info.getId() != null && info.getControllerClass() != null)
-                idToClass.put(info.getId(), info.getControllerClass().getName());
-        });
+        // ⭐ Build VIEW TREE (packages)
+        buildViewsTree(viewRoot);
 
-        for (String viewId : views.keySet()) {
-            if (viewId == null || viewId.isBlank()) continue;
-            String className = idToClass.getOrDefault(viewId, viewId);
-            String[] parts = className.split("\\.");
+        // ⭐ NÉN các folder 1-child → com.vn.rm.view
+        viewRoot = compressSingleChildFolders(viewRoot);
 
-            PolicyGroupNode currentParent = viewRoot;
-            for (int i = 0; i < parts.length - 1; i++) {
-                String part = parts[i];
-                PolicyGroupNode existing = currentParent.getChildren().stream()
-                        .filter(c -> Boolean.TRUE.equals(c.getGroup()) && c.getName().equals(part))
-                        .findFirst().orElse(null);
-                if (existing == null) {
-                    PolicyGroupNode folder = new PolicyGroupNode(part, true);
-                    folder.setParent(currentParent);
-                    currentParent.getChildren().add(folder);
-                    currentParent = folder;
-                } else currentParent = existing;
-            }
-
-            String simpleName = parts[parts.length - 1];
-            PolicyGroupNode leaf = new PolicyGroupNode(simpleName, false);
-            leaf.setResource(viewId);
-            leaf.setAction("view");
-            leaf.setType("VIEW");
-            leaf.setParent(currentParent);
-            currentParent.getChildren().add(leaf);
-        }
-
+        // ⭐ Build menu tree
         for (MenuItem root : menuConfig.getRootItems()) {
             PolicyGroupNode rootNode = new PolicyGroupNode(root.getId(), true);
             rootNode.setType("MENU");
@@ -297,22 +279,18 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
             buildMenuSubTree(rootNode, root);
         }
 
+        // Map view/menu id to nodes
         Map<String, PolicyGroupNode> allLeafs = new HashMap<>();
         collectLeafNodes(viewRoot, allLeafs);
         collectLeafNodes(menuRoot, allLeafs);
 
+        // Apply effect from DB
         for (ResourcePolicyModel policy : model.getResourcePolicies()) {
-            if (policy.getResource() == null || policy.getType() == null) continue;
             PolicyGroupNode node = allLeafs.get(policy.getResource());
             if (node != null) {
                 node.setEffect(policy.getEffect());
-                if ("ALLOW".equalsIgnoreCase(policy.getEffect())) {
-                    node.setAllow(true);
-                    node.setDeny(false);
-                } else {
-                    node.setAllow(false);
-                    node.setDeny(true);
-                }
+                node.setAllow("ALLOW".equalsIgnoreCase(policy.getEffect()));
+                node.setDeny("DENY".equalsIgnoreCase(policy.getEffect()));
             }
         }
 
@@ -321,21 +299,98 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
         policyTreeGrid.setItems(roots, PolicyGroupNode::getChildren);
     }
 
+    // ====================================================================================
+    // ⭐ BUILD VIEWS TREE (theo package)
+    // ====================================================================================
+    private void buildViewsTree(PolicyGroupNode root) {
+        Map<String, String> views = resourcePolicyViewUtils.getViewsOptionsMap(false);
+
+        Map<String, String> idToClass = new HashMap<>();
+        viewRegistry.getViewInfos().forEach(info -> {
+            if (info.getId() != null && info.getControllerClass() != null)
+                idToClass.put(info.getId(), info.getControllerClass().getName());
+        });
+
+        for (String viewId : views.keySet()) {
+            String className = idToClass.getOrDefault(viewId, viewId);
+            String[] parts = className.split("\\.");
+
+            PolicyGroupNode cur = root;
+
+            for (int i = 0; i < parts.length - 1; i++) {
+                String part = parts[i];
+
+                PolicyGroupNode folder = cur.getChildren().stream()
+                        .filter(c -> Boolean.TRUE.equals(c.getGroup()) && c.getName().equals(part))
+                        .findFirst()
+                        .orElse(null);
+
+                if (folder == null) {
+                    folder = new PolicyGroupNode(part, true);
+                    folder.setParent(cur);
+                    cur.getChildren().add(folder);
+                }
+
+                cur = folder;
+            }
+
+            String name = parts[parts.length - 1];
+            PolicyGroupNode leaf = new PolicyGroupNode(name, false);
+            leaf.setResource(viewId);
+            leaf.setAction("view");
+            leaf.setType("VIEW");
+            leaf.setParent(cur);
+            cur.getChildren().add(leaf);
+        }
+    }
+
+    // ====================================================================================
+    // ⭐ COMPRESS FOLDERS (gom com → com.vn → com.vn.rm → com.vn.rm.view)
+    // ====================================================================================
+    private PolicyGroupNode compressSingleChildFolders(PolicyGroupNode node) {
+        if (!Boolean.TRUE.equals(node.getGroup())) return node;
+
+        List<PolicyGroupNode> newChildren = new ArrayList<>();
+        for (PolicyGroupNode c : node.getChildren()) {
+            newChildren.add(compressSingleChildFolders(c));
+        }
+        node.setChildren(newChildren);
+
+        if (node.getChildren().size() == 1 && node.getChildren().get(0).getGroup()) {
+            PolicyGroupNode only = node.getChildren().get(0);
+
+            if (!node.getName().equals("View Access")) {
+                only.setName(node.getName() + "." + only.getName());
+            }
+
+            return only;
+        }
+
+        return node;
+    }
+
+    // ====================================================================================
+    // MENU TREE BUILDER
+    // ====================================================================================
     private void buildMenuSubTree(PolicyGroupNode parentNode, MenuItem menuItem) {
         for (MenuItem child : menuItem.getChildren()) {
-            if (child.getChildren().isEmpty()) {
-                PolicyGroupNode leaf = new PolicyGroupNode(child.getId(), false);
-                leaf.setResource(child.getId());
-                leaf.setType("MENU");
-                leaf.setAction("view");
-                leaf.setParent(parentNode);
-                parentNode.getChildren().add(leaf);
-            } else {
-                PolicyGroupNode folder = new PolicyGroupNode(child.getId(), true);
-                folder.setType("MENU");
-                folder.setParent(parentNode);
-                parentNode.getChildren().add(folder);
-                buildMenuSubTree(folder, child);
+            boolean hasChildren = !child.getChildren().isEmpty();
+            boolean isGroup = (child.getView() == null && hasChildren);
+
+            PolicyGroupNode node = new PolicyGroupNode(child.getId(), isGroup);
+            node.setType("MENU");
+            node.setResource(child.getId());
+            node.setAction("view");
+            node.setParent(parentNode);
+
+            if (child.getView() != null) {
+                node.setGroup(false);
+            }
+
+            parentNode.getChildren().add(node);
+
+            if (hasChildren) {
+                buildMenuSubTree(node, child);
             }
         }
     }
@@ -343,40 +398,34 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
     private void collectLeafNodes(PolicyGroupNode node, Map<String, PolicyGroupNode> map) {
         if (!Boolean.TRUE.equals(node.getGroup()) && node.getResource() != null)
             map.put(node.getResource(), node);
+
         for (PolicyGroupNode child : node.getChildren())
             collectLeafNodes(child, map);
     }
 
-    /** ================== TREE GRID ================== **/
+    // ====================================================================================
+    // TREE GRID UI
+    // ====================================================================================
     private void setupTreeGrid(String source) {
         policyTreeGrid.removeAllColumns();
         boolean editable = "DATABASE".equalsIgnoreCase(source);
 
         policyTreeGrid.addHierarchyColumn(PolicyGroupNode::getName)
                 .setHeader("Policy Group / Resource");
+
         policyTreeGrid.addColumn(PolicyGroupNode::getType).setHeader("Type");
         policyTreeGrid.addColumn(PolicyGroupNode::getAction).setHeader("Action");
         policyTreeGrid.addColumn(PolicyGroupNode::getEffect).setHeader("Effect");
 
-        // ✅ Không cho cả 2 bỏ trống
         policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (allow, node) -> {
             allow.setVisible(!Boolean.TRUE.equals(node.getGroup()));
             allow.setValue(Boolean.TRUE.equals(node.getAllow()));
             allow.setEnabled(editable);
-
             allow.addValueChangeListener(e -> {
                 boolean value = e.getValue();
-                if (value) {
-                    node.setAllow(true);
-                    node.setDeny(false);
-                    node.setEffect("ALLOW");
-                } else {
-                    if (!Boolean.TRUE.equals(node.getDeny())) {
-                        node.setAllow(false);
-                        node.setDeny(true);
-                        node.setEffect("DENY");
-                    }
-                }
+                node.setAllow(value);
+                node.setDeny(!value);
+                node.setEffect(value ? "ALLOW" : "DENY");
                 policyTreeGrid.getDataProvider().refreshItem(node);
             });
         })).setHeader("Allow");
@@ -385,25 +434,19 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
             deny.setVisible(!Boolean.TRUE.equals(node.getGroup()));
             deny.setValue(Boolean.TRUE.equals(node.getDeny()));
             deny.setEnabled(editable);
-
             deny.addValueChangeListener(e -> {
                 boolean value = e.getValue();
-                if (value) {
-                    node.setDeny(true);
-                    node.setAllow(false);
-                    node.setEffect("DENY");
-                } else {
-                    if (!Boolean.TRUE.equals(node.getAllow())) {
-                        node.setDeny(false);
-                        node.setAllow(true);
-                        node.setEffect("ALLOW");
-                    }
-                }
+                node.setDeny(value);
+                node.setAllow(!value);
+                node.setEffect(value ? "DENY" : "ALLOW");
                 policyTreeGrid.getDataProvider().refreshItem(node);
             });
         })).setHeader("Deny");
     }
 
+    // ====================================================================================
+    // FILTER
+    // ====================================================================================
     private void refreshTreeWithFilter() {
         boolean onlyAssigned = Boolean.TRUE.equals(showAssignedOnly.getValue());
         if (onlyAssigned) {
@@ -422,6 +465,7 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
     private PolicyGroupNode filterAssignedRecursive(PolicyGroupNode node) {
         if (!Boolean.TRUE.equals(node.getGroup()))
             return (node.getEffect() != null) ? node : null;
+
         List<PolicyGroupNode> filteredChildren = new ArrayList<>();
         for (PolicyGroupNode child : node.getChildren()) {
             PolicyGroupNode f = filterAssignedRecursive(child);
@@ -435,26 +479,24 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
         return null;
     }
 
-    /** ================== TOGGLE ALL ================== **/
+    // ====================================================================================
+    // ALLOW ALL / DENY ALL
+    // ====================================================================================
     private void toggleAll(Boolean allow) {
-        for (PolicyGroupNode node : policyTreeDc.getItems())
-            applyToChildren(node, allow);
+        for (PolicyGroupNode root : policyTreeDc.getItems()) {
+            applyToChildrenRecursive(root, allow);
+        }
         policyTreeGrid.getDataProvider().refreshAll();
     }
 
-    private void applyToChildren(PolicyGroupNode node, Boolean allow) {
+    private void applyToChildrenRecursive(PolicyGroupNode node, Boolean allow) {
         if (!Boolean.TRUE.equals(node.getGroup())) {
-            if (allow == null) {
-                node.setAllow(false);
-                node.setDeny(true);
-                node.setEffect("DENY");
-            } else {
-                node.setAllow(allow);
-                node.setDeny(!allow);
-                node.setEffect(allow ? "ALLOW" : "DENY");
-            }
+            node.setAllow(Boolean.TRUE.equals(allow));
+            node.setDeny(!Boolean.TRUE.equals(allow));
+            node.setEffect(Boolean.TRUE.equals(allow) ? "ALLOW" : "DENY");
         }
-        for (PolicyGroupNode child : node.getChildren())
-            applyToChildren(child, allow);
+        for (PolicyGroupNode child : node.getChildren()) {
+            applyToChildrenRecursive(child, allow);
+        }
     }
 }

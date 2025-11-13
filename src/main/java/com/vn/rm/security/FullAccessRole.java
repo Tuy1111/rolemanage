@@ -148,7 +148,7 @@ public interface FullAccessRole {
     @EntityAttributePolicy(entityClass = AbstractSingleFilterCondition.class, attributes = "*", action = EntityAttributePolicyAction.VIEW)
     void abstractSingleFilterCondition();
 
-    @MenuPolicy(menuIds = {"ext_sec_ResourceRoleModel.list", "rm_User.list", "sec_ResourceRoleModel.list", "sec_RowLevelRoleModel.list", "datatl_entityInspectorListView"})
+    @MenuPolicy(menuIds = {"rm_User.list", "sec_ResourceRoleModel.list", "sec_RowLevelRoleModel.list", "datatl_entityInspectorListView", "ext_sec_ResourceRoleModel.list"})
     @ViewPolicy(viewIds = {"ext_sec_ResourceRoleModel.list", "rm_User.list", "sec_ResourceRoleModel.list", "sec_RowLevelRoleModel.list", "datatl_entityInspectorListView", "rm_LoginView", "rm_MainView", "EntitiesFragment", "UserInterfaceFragment", "rm_ResourceRoleEditView", "DataGridEmptyStateByPermissionsFragment", "headerPropertyFilterLayout", "inputDialog", "multiValueSelectDialog", "flowui_AddConditionView", "flowui_GroupFilterCondition.detail"})
     void screens();
 }
