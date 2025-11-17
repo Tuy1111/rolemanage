@@ -13,7 +13,6 @@ import io.jmix.flowui.fragment.FragmentDescriptor;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.view.Subscribe;
 import io.jmix.flowui.view.Target;
-import io.jmix.flowui.view.View;
 import io.jmix.flowui.view.ViewComponent;
 import io.jmix.security.model.EntityAttributePolicyAction;
 import io.jmix.security.model.EntityPolicyAction;
@@ -21,6 +20,8 @@ import io.jmix.security.model.ResourcePolicyEffect;
 import io.jmix.security.model.ResourcePolicyModel;
 import io.jmix.security.model.ResourcePolicyType;
 import io.jmix.securityflowui.view.resourcepolicy.ResourcePolicyViewUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
@@ -28,6 +29,8 @@ import java.util.stream.Collectors;
 
 @FragmentDescriptor("entities-fragment.xml")
 public class EntitiesFragment extends Fragment<VerticalLayout> {
+
+    private static final Logger log = LoggerFactory.getLogger(EntitiesFragment.class);
 
     // ============================= UI components =============================
 
@@ -65,18 +68,98 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
 
     @Subscribe
     public void onReady(Fragment.ReadyEvent event) {
+        log.info("=== EntitiesFragment.onReady() called ===");
         // thay cho onInit + onReady cũ
         entityMatrixTable.setSelectionMode(DataGrid.SelectionMode.SINGLE);
         buildMatrixSkeleton();
+        log.info("Matrix skeleton built, entities count: {}", entityMatrixDc.getItems().size());
         installMatrixColumns();
         installAttrColumns();
 
-        refreshMatrixFromPolicies();
+        // Không gọi refreshMatrixFromPolicies() ở đây vì dữ liệu chưa được load từ DB
+        // Sẽ được gọi trong initPolicies() sau khi view cha set dữ liệu
+        log.info("Fragment ready, waiting for policies from parent view");
     }
 
     // ========================================================================
     // ============ API để view cha có thể gọi khi cần ========================
     // ========================================================================
+
+    /**
+     * View cha gọi để set dữ liệu policies vào fragment và reload ma trận.
+     * Tương tự như UserInterfaceFragment.initUi()
+     */
+    public void initPolicies(Collection<ResourcePolicyModel> policies) {
+        log.info("=== EntitiesFragment.initPolicies() called ===");
+        int policyCount = policies != null ? policies.size() : 0;
+        log.info("Received {} policies from parent view", policyCount);
+
+        if (policies != null && !policies.isEmpty()) {
+            log.info("Sample policies (first 5):");
+            policies.stream().limit(5).forEach(p -> {
+                log.info("  - Type: {}, Resource: {}, Action: {}, Effect: {}",
+                        p.getType(), p.getResource(), p.getAction(), p.getEffect());
+            });
+
+            // Đếm số lượng policies theo type
+            // getType() có thể trả về String hoặc ResourcePolicyType enum
+            // Trong DB có thể lưu là "entity" (chữ thường) hoặc "ENTITY" (chữ hoa)
+            long entityCount = policies.stream()
+                    .filter(p -> isEntityType(p.getType()))
+                    .count();
+            long attrCount = policies.stream()
+                    .filter(p -> isEntityAttributeType(p.getType()))
+                    .count();
+            long viewCount = policies.stream()
+                    .filter(p -> {
+                        Object type = p.getType();
+                        return type != null && (
+                                "VIEW".equals(type.toString()) ||
+                                        type.toString().contains("VIEW")
+                        );
+                    })
+                    .count();
+            long otherCount = policies.size() - entityCount - attrCount - viewCount;
+
+            log.info("Policy breakdown - ENTITY: {}, ENTITY_ATTRIBUTE: {}, VIEW: {}, Other: {}",
+                    entityCount, attrCount, viewCount, otherCount);
+
+            // Log tất cả ENTITY và ENTITY_ATTRIBUTE policies
+            if (entityCount > 0 || attrCount > 0) {
+                log.info("ENTITY and ENTITY_ATTRIBUTE policies found: {} ENTITY, {} ENTITY_ATTRIBUTE", entityCount, attrCount);
+                policies.stream()
+                        .filter(p -> isEntityType(p.getType()) || isEntityAttributeType(p.getType()))
+                        .forEach(p -> {
+                            log.info("  - Type: {}, Resource: {}, Action: {}, Effect: {}",
+                                    p.getType(), p.getResource(), p.getAction(), p.getEffect());
+                        });
+            } else {
+                log.warn("⚠️ NO ENTITY or ENTITY_ATTRIBUTE policies found! Matrix will be empty.");
+                log.warn("All policies are of type: {}",
+                        policies.stream().map(p -> String.valueOf(p.getType())).distinct().collect(Collectors.joining(", ")));
+            }
+        }
+
+        if (policies != null) {
+            resourcePoliciesDc.setItems(new ArrayList<>(policies));
+        } else {
+            resourcePoliciesDc.setItems(Collections.emptyList());
+        }
+        log.info("Set {} items to resourcePoliciesDc", resourcePoliciesDc.getItems().size());
+
+        // Đảm bảo fragment đã được khởi tạo đầy đủ trước khi refresh
+        if (entityMatrixDc.getItems().isEmpty()) {
+            log.warn("Entity matrix is empty, initializing now...");
+            entityMatrixTable.setSelectionMode(DataGrid.SelectionMode.SINGLE);
+            buildMatrixSkeleton();
+            installMatrixColumns();
+            installAttrColumns();
+        }
+
+        log.info("Calling refreshMatrixFromPolicies()...");
+        refreshMatrixFromPolicies();
+        log.info("refreshMatrixFromPolicies() completed. Entity matrix rows: {}", entityMatrixDc.getItems().size());
+    }
 
     /**
      * View cha có thể gọi để reload ma trận từ resourcePoliciesDc
@@ -158,7 +241,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                                 .filter(a -> !"*".equals(a.getAttribute()))
                                 .allMatch(a -> T(a.getCanView()) || T(a.getCanModify()));
                         if (allSelected) {
-                            list.removeIf(p -> p.getType() == ResourcePolicyType.ENTITY_ATTRIBUTE
+                            list.removeIf(p -> isEntityAttributeType(p.getType())
                                     && p.getResource() != null
                                     && p.getResource().startsWith(entity + ".")
                                     && !p.getResource().equals(entity + ".*"));
@@ -217,7 +300,9 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
      * Chấp nhận effect = null hoặc ALLOW.
      */
     private void refreshMatrixFromPolicies() {
+        log.debug("=== refreshMatrixFromPolicies() started ===");
         List<EntityMatrixRow> rows = new ArrayList<>(entityMatrixDc.getItems());
+        log.debug("Entity matrix rows count: {}", rows.size());
 
         // reset state
         rows.forEach(r -> {
@@ -231,37 +316,103 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
 
         Collection<ResourcePolicyModel> policies =
                 Optional.ofNullable(resourcePoliciesDc.getItems()).orElseGet(List::of);
+        log.debug("Processing {} policies", policies.size());
 
         // map entity -> row cho lookup nhanh
         Map<String, EntityMatrixRow> rowByEntity = rows.stream()
                 .filter(r -> !Strings.isNullOrEmpty(r.getEntityName()))
                 .filter(r -> !"*".equals(r.getEntityName()))
                 .collect(Collectors.toMap(EntityMatrixRow::getEntityName, r -> r));
+        log.debug("Entity lookup map size: {}", rowByEntity.size());
+        log.info("Sample entities in matrix (first 5): {}",
+                rowByEntity.keySet().stream().limit(5).collect(Collectors.joining(", ")));
 
         // apply policies
-        for (ResourcePolicyModel p : policies) {
-            if (p.getResource() == null)
-                continue;
-            boolean allow = (p.getEffect() == null || p.getEffect() == ResourcePolicyEffect.ALLOW);
-            if (!allow)
-                continue;
+        int entityPolicyCount = 0;
+        int attrPolicyCount = 0;
+        int skippedNullResource = 0;
+        int skippedNotAllow = 0;
+        int skippedNotEntityType = 0;
 
-            if (p.getType() == ResourcePolicyType.ENTITY) {
-                EntityMatrixRow row = rowByEntity.get(p.getResource());
-                if (row == null)
+        for (ResourcePolicyModel p : policies) {
+            if (p.getResource() == null) {
+                skippedNullResource++;
+                continue;
+            }
+            // Kiểm tra effect - có thể là enum hoặc string "ALLOW"/"allow"
+            Object effect = p.getEffect();
+            boolean allow = false;
+            if (effect == null) {
+                allow = true; // null được coi là ALLOW
+            } else if (effect == ResourcePolicyEffect.ALLOW) {
+                allow = true;
+            } else {
+                String effectStr = effect.toString();
+                allow = "ALLOW".equalsIgnoreCase(effectStr) || "allow".equalsIgnoreCase(effectStr);
+            }
+
+            if (!allow) {
+                skippedNotAllow++;
+                log.debug("Skipping policy with effect: {} (type: {})", p.getEffect(),
+                        p.getEffect() != null ? p.getEffect().getClass().getName() : "null");
+                continue;
+            }
+
+            log.debug("Policy passed effect check: resource={}, effect={}", p.getResource(), p.getEffect());
+
+            // Kiểm tra type với cả enum và string (chữ thường/chữ hoa)
+            Object type = p.getType();
+            boolean isEntity = isEntityType(type);
+            boolean isEntityAttr = isEntityAttributeType(type);
+
+            if (!isEntity && !isEntityAttr) {
+                skippedNotEntityType++;
+                continue;
+            }
+
+            log.debug("Processing policy: type={}, resource={}, action={}, effect={}, isEntity={}, isEntityAttr={}",
+                    type, p.getResource(), p.getAction(), p.getEffect(), isEntity, isEntityAttr);
+
+            if (isEntity) {
+                entityPolicyCount++;
+                String resource = p.getResource();
+                EntityMatrixRow row = rowByEntity.get(resource);
+                if (row == null) {
+                    log.warn("⚠️ Entity policy for '{}' NOT FOUND in matrix! Available entities: {}",
+                            resource,
+                            rowByEntity.keySet().stream().limit(10).collect(Collectors.joining(", ")));
                     continue;
+                }
 
                 String action = p.getAction();
+                log.info("Processing ENTITY policy: resource={}, action={}, CREATE.id={}, READ.id={}, UPDATE.id={}, DELETE.id={}",
+                        resource, action,
+                        EntityPolicyAction.CREATE.getId(),
+                        EntityPolicyAction.READ.getId(),
+                        EntityPolicyAction.UPDATE.getId(),
+                        EntityPolicyAction.DELETE.getId());
+
                 if (EntityPolicyAction.CREATE.getId().equals(action)) {
                     row.setCanCreate(true);
+
                 } else if (EntityPolicyAction.READ.getId().equals(action)) {
                     row.setCanRead(true);
                 } else if (EntityPolicyAction.UPDATE.getId().equals(action)) {
                     row.setCanUpdate(true);
+                    log.info("✓ Applied UPDATE policy to entity: {}", resource);
                 } else if (EntityPolicyAction.DELETE.getId().equals(action)) {
                     row.setCanDelete(true);
+                    log.info("✓ Applied DELETE policy to entity: {}", resource);
+                } else {
+                    log.warn("⚠️ Action '{}' does NOT match! Expected: create={}, read={}, update={}, delete={}",
+                            action,
+                            EntityPolicyAction.CREATE.getId(),
+                            EntityPolicyAction.READ.getId(),
+                            EntityPolicyAction.UPDATE.getId(),
+                            EntityPolicyAction.DELETE.getId());
                 }
-            } else if (p.getType() == ResourcePolicyType.ENTITY_ATTRIBUTE) {
+            } else if (isEntityAttr) {
+                attrPolicyCount++;
                 String res = p.getResource();
                 if (res.endsWith(".*")) {
                     String entity = res.substring(0, res.length() - 2);
@@ -273,11 +424,31 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
             }
         }
 
+        log.info("Applied {} ENTITY policies and {} ENTITY_ATTRIBUTE policies", entityPolicyCount, attrPolicyCount);
+        log.info("Skipped: {} null resource, {} not allow, {} not entity type",
+                skippedNullResource, skippedNotAllow, skippedNotEntityType);
+
+        // Log một số rows đã được update để kiểm tra
+        rows.stream()
+                .filter(r -> T(r.getCanCreate()) || T(r.getCanRead()) || T(r.getCanUpdate()) || T(r.getCanDelete()))
+                .limit(5)
+                .forEach(r -> {
+                    log.info("Updated row: entity={}, create={}, read={}, update={}, delete={}",
+                            r.getEntityName(), r.getCanCreate(), r.getCanRead(), r.getCanUpdate(), r.getCanDelete());
+                });
+
         // sync allowAll
         rows.forEach(this::syncAllowAll);
 
         // gán lại vào container
         entityMatrixDc.setItems(rows);
+        log.info("Updated entity matrix with {} rows", rows.size());
+
+        // Kiểm tra lại sau khi set items
+        long rowsWithPermissions = entityMatrixDc.getItems().stream()
+                .filter(r -> T(r.getCanCreate()) || T(r.getCanRead()) || T(r.getCanUpdate()) || T(r.getCanDelete()))
+                .count();
+        log.info("Rows with permissions after update: {}", rowsWithPermissions);
 
         // preload attr + summary
         preloadAllAttributesFromDbAndFillEntitySummary(policies);
@@ -413,7 +584,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                                    Collection<ResourcePolicyModel> policies) {
 
         Map<String, List<ResourcePolicyModel>> byRes = policies.stream()
-                .filter(p -> p.getType() == ResourcePolicyType.ENTITY_ATTRIBUTE)
+                .filter(p -> isEntityAttributeType(p.getType()))
                 .filter(p -> p.getResource() != null && p.getResource().startsWith(entityName + "."))
                 .filter(p -> p.getEffect() == null || p.getEffect() == ResourcePolicyEffect.ALLOW)
                 .collect(Collectors.groupingBy(ResourcePolicyModel::getResource));
@@ -613,6 +784,26 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
 
     // ======================= Utils & helpers ================================
 
+    /**
+     * Kiểm tra xem policy type có phải là ENTITY không (hỗ trợ cả enum và string, chữ thường/chữ hoa)
+     */
+    private boolean isEntityType(Object type) {
+        if (type == null) return false;
+        if (type == ResourcePolicyType.ENTITY) return true;
+        String typeStr = type.toString().toLowerCase();
+        return "entity".equals(typeStr);
+    }
+
+    /**
+     * Kiểm tra xem policy type có phải là ENTITY_ATTRIBUTE không (hỗ trợ cả enum và string, chữ thường/chữ hoa)
+     */
+    private boolean isEntityAttributeType(Object type) {
+        if (type == null) return false;
+        if (type == ResourcePolicyType.ENTITY_ATTRIBUTE) return true;
+        String typeStr = type.toString().toLowerCase();
+        return "entityattribute".equals(typeStr) || "entity_attribute".equals(typeStr);
+    }
+
     private void syncAllowAll(EntityMatrixRow r) {
         boolean all = T(r.getCanCreate()) && T(r.getCanRead())
                 && T(r.getCanUpdate()) && T(r.getCanDelete());
@@ -695,7 +886,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         Map<String, Set<String>> entityWildcardActions = new HashMap<>();
 
         for (ResourcePolicyModel p : src) {
-            if (p.getType() == ResourcePolicyType.ENTITY_ATTRIBUTE
+            if (isEntityAttributeType(p.getType())
                     && (p.getEffect() == null || p.getEffect() == ResourcePolicyEffect.ALLOW)
                     && p.getResource() != null
                     && p.getResource().endsWith(".*")) {
@@ -710,7 +901,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
             return src;
 
         return src.stream().filter(p -> {
-            if (p.getType() != ResourcePolicyType.ENTITY_ATTRIBUTE
+            if (!isEntityAttributeType(p.getType())
                     || p.getResource() == null
                     || p.getResource().endsWith(".*")) {
                 return true;
