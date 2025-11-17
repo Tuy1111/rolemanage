@@ -8,9 +8,8 @@ import io.jmix.flowui.component.grid.TreeDataGrid;
 import io.jmix.flowui.fragment.Fragment;
 import io.jmix.flowui.fragment.FragmentDescriptor;
 import io.jmix.flowui.model.CollectionContainer;
-import io.jmix.flowui.view.Subscribe;
-import io.jmix.flowui.view.Target;
 import io.jmix.flowui.view.ViewComponent;
+import io.jmix.flowui.view.Subscribe;
 import io.jmix.security.model.ResourcePolicyModel;
 import io.jmix.security.model.ResourceRoleModel;
 import io.jmix.securityflowui.view.resourcepolicy.ResourcePolicyViewUtils;
@@ -20,59 +19,53 @@ import io.jmix.flowui.menu.MenuItem;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @FragmentDescriptor("user-interface-fragment.xml")
 public class UserInterfaceFragment extends Fragment<VerticalLayout> {
 
-    @Autowired
-    private ResourcePolicyViewUtils resourcePolicyViewUtils;
-    @Autowired
-    private ViewRegistry viewRegistry;
-    @Autowired
-    private MenuConfig menuConfig;
-    @Autowired
-    private Notifications notifications;
+    @Autowired private ResourcePolicyViewUtils resourcePolicyViewUtils;
+    @Autowired private ViewRegistry viewRegistry;
+    @Autowired private MenuConfig menuConfig;
+    @Autowired private Notifications notifications;
 
     @ViewComponent
     private CollectionContainer<PolicyGroupNode> policyTreeDc;
     @ViewComponent
     private TreeDataGrid<PolicyGroupNode> policyTreeGrid;
-
     @ViewComponent
     private Checkbox showAssignedOnly;
     @ViewComponent
     private Checkbox allowAllViews;
 
-    // ====================== API cho View cha gọi ======================
-
-    /**
-     * Gọi sau khi roleModel đã được set để build tree + bind event.
-     */
+    // ================================================================
+    //               API gọi từ ResourceRoleEditView
+    // ================================================================
     public void initUi(ResourceRoleModel model) {
         buildTree(model);
         setupTreeGrid(model.getSource().name());
 
         boolean hasAllowAll = model.getResourcePolicies().stream()
                 .anyMatch(p -> "*".equals(p.getResource())
-                        && "ALLOW".equalsIgnoreCase(String.valueOf(p.getEffect())));
+                        && "ALLOW".equalsIgnoreCase(p.getEffect()));
         allowAllViews.setValue(hasAllowAll);
 
         showAssignedOnly.addValueChangeListener(e -> refreshTreeWithFilter());
+
         allowAllViews.addValueChangeListener(e -> {
             if (Boolean.TRUE.equals(e.getValue())) {
                 toggleAll(true);
-                notifications.create("All views allowed").show();
+                notifications.create("Allow All Views").show();
             } else {
                 toggleAll(false);
-                notifications.create("Reset all permissions to DENY").show();
+                notifications.create("Reset All → DENY").show();
             }
         });
     }
 
-    /**
-     * Thu thập policies từ cây để view cha save xuống DB.
-     */
+    public void reloadFromPolicies() {
+        policyTreeGrid.getDataProvider().refreshAll();
+    }
+
     public List<ResourcePolicyModel> collectPoliciesFromTree() {
         List<ResourcePolicyModel> list = new ArrayList<>();
         for (PolicyGroupNode root : policyTreeDc.getItems()) {
@@ -81,24 +74,21 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
         return list;
     }
 
-    /**
-     * Cho view cha biết checkbox "Allow all views" đang bật không.
-     */
     public boolean isAllowAllViewsChecked() {
         return Boolean.TRUE.equals(allowAllViews.getValue());
     }
 
-    // ============================ BUILD TREE ============================
-
+    // ================================================================
+    //                         BUILD TREE
+    // ================================================================
     private void buildTree(ResourceRoleModel model) {
+
         PolicyGroupNode viewRoot = new PolicyGroupNode("View Access", true);
         PolicyGroupNode menuRoot = new PolicyGroupNode("Menu Access", true);
 
-        // VIEW TREE theo package
         buildViewsTree(viewRoot);
         viewRoot = compressSingleChildFolders(viewRoot);
 
-        // MENU TREE
         for (MenuItem root : menuConfig.getRootItems()) {
             PolicyGroupNode rootNode = new PolicyGroupNode(root.getId(), true);
             rootNode.setType("MENU");
@@ -107,16 +97,15 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
             buildMenuSubTree(rootNode, root);
         }
 
-        // Map resource -> leaf node
         Map<String, PolicyGroupNode> allLeafs = new HashMap<>();
         collectLeafNodes(viewRoot, allLeafs);
         collectLeafNodes(menuRoot, allLeafs);
 
-        // Apply effect từ policies của role
-        for (ResourcePolicyModel policy : model.getResourcePolicies()) {
-            PolicyGroupNode node = allLeafs.get(policy.getResource());
+        // Áp quyền từ DB
+        for (ResourcePolicyModel p : model.getResourcePolicies()) {
+            PolicyGroupNode node = allLeafs.get(p.getResource());
             if (node != null) {
-                String eff = String.valueOf(policy.getEffect());
+                String eff = p.getEffect();
                 node.setEffect(eff);
                 node.setAllow("ALLOW".equalsIgnoreCase(eff));
                 node.setDeny("DENY".equalsIgnoreCase(eff));
@@ -128,14 +117,16 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
         policyTreeGrid.setItems(roots, PolicyGroupNode::getChildren);
     }
 
+    // ================================================================
+    //                BUILD VIEWS TREE THEO PACKAGE
+    // ================================================================
     private void buildViewsTree(PolicyGroupNode root) {
         Map<String, String> views = resourcePolicyViewUtils.getViewsOptionsMap(false);
 
         Map<String, String> idToClass = new HashMap<>();
         viewRegistry.getViewInfos().forEach(info -> {
-            if (info.getId() != null && info.getControllerClass() != null) {
+            if (info.getId() != null && info.getControllerClass() != null)
                 idToClass.put(info.getId(), info.getControllerClass().getName());
-            }
         });
 
         for (String viewId : views.keySet()) {
@@ -157,12 +148,10 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
                     folder.setParent(cur);
                     cur.getChildren().add(folder);
                 }
-
                 cur = folder;
             }
 
-            String name = parts[parts.length - 1];
-            PolicyGroupNode leaf = new PolicyGroupNode(name, false);
+            PolicyGroupNode leaf = new PolicyGroupNode(parts[parts.length - 1], false);
             leaf.setResource(viewId);
             leaf.setAction("view");
             leaf.setType("VIEW");
@@ -171,6 +160,9 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
         }
     }
 
+    // ================================================================
+    //                     COMPRESS FOLDERS
+    // ================================================================
     private PolicyGroupNode compressSingleChildFolders(PolicyGroupNode node) {
         if (!Boolean.TRUE.equals(node.getGroup())) return node;
 
@@ -186,15 +178,18 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
             if (!"View Access".equals(node.getName())) {
                 only.setName(node.getName() + "." + only.getName());
             }
-
             return only;
         }
 
         return node;
     }
 
+    // ================================================================
+    //                       MENU TREE
+    // ================================================================
     private void buildMenuSubTree(PolicyGroupNode parentNode, MenuItem menuItem) {
         for (MenuItem child : menuItem.getChildren()) {
+
             boolean hasChildren = !child.getChildren().isEmpty();
             boolean isGroup = (child.getView() == null && hasChildren);
 
@@ -217,91 +212,94 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
     }
 
     private void collectLeafNodes(PolicyGroupNode node, Map<String, PolicyGroupNode> map) {
-        if (!Boolean.TRUE.equals(node.getGroup()) && node.getResource() != null) {
+        if (!Boolean.TRUE.equals(node.getGroup()) && node.getResource() != null)
             map.put(node.getResource(), node);
-        }
-        for (PolicyGroupNode child : node.getChildren()) {
+
+        for (PolicyGroupNode child : node.getChildren())
             collectLeafNodes(child, map);
-        }
     }
 
-    // ============================ TREE GRID UI ============================
-
+    // ================================================================
+    //                         TREE GRID UI
+    // ================================================================
     private void setupTreeGrid(String source) {
         policyTreeGrid.removeAllColumns();
         boolean editable = "DATABASE".equalsIgnoreCase(source);
 
         policyTreeGrid.addHierarchyColumn(PolicyGroupNode::getName)
-                .setHeader("Policy Group / Resource");
+                .setHeader("Resource");
 
         policyTreeGrid.addColumn(PolicyGroupNode::getType).setHeader("Type");
         policyTreeGrid.addColumn(PolicyGroupNode::getAction).setHeader("Action");
         policyTreeGrid.addColumn(PolicyGroupNode::getEffect).setHeader("Effect");
 
-        policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (allow, node) -> {
-            allow.setVisible(!Boolean.TRUE.equals(node.getGroup()));
-            allow.setValue(Boolean.TRUE.equals(node.getAllow()));
-            allow.setEnabled(editable);
-            allow.addValueChangeListener(e -> {
-                boolean value = e.getValue();
-                node.setAllow(value);
-                node.setDeny(!value);
-                node.setEffect(value ? "ALLOW" : "DENY");
+        policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (cb, node) -> {
+            cb.setVisible(!Boolean.TRUE.equals(node.getGroup()));
+            cb.setValue(Boolean.TRUE.equals(node.getAllow()));
+            cb.setEnabled(editable);
+            cb.addValueChangeListener(e -> {
+                boolean v = e.getValue();
+                node.setAllow(v);
+                node.setDeny(!v);
+                node.setEffect(v ? "ALLOW" : "DENY");
                 policyTreeGrid.getDataProvider().refreshItem(node);
             });
         })).setHeader("Allow");
 
-        policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (deny, node) -> {
-            deny.setVisible(!Boolean.TRUE.equals(node.getGroup()));
-            deny.setValue(Boolean.TRUE.equals(node.getDeny()));
-            deny.setEnabled(editable);
-            deny.addValueChangeListener(e -> {
-                boolean value = e.getValue();
-                node.setDeny(value);
-                node.setAllow(!value);
-                node.setEffect(value ? "DENY" : "ALLOW");
+        policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (cb, node) -> {
+            cb.setVisible(!Boolean.TRUE.equals(node.getGroup()));
+            cb.setValue(Boolean.TRUE.equals(node.getDeny()));
+            cb.setEnabled(editable);
+            cb.addValueChangeListener(e -> {
+                boolean v = e.getValue();
+                node.setDeny(v);
+                node.setAllow(!v);
+                node.setEffect(v ? "DENY" : "ALLOW");
                 policyTreeGrid.getDataProvider().refreshItem(node);
             });
         })).setHeader("Deny");
     }
 
-    // ============================== FILTER ==============================
-
+    // ================================================================
+    //                        FILTER "Assigned Only"
+    // ================================================================
     private void refreshTreeWithFilter() {
-        boolean onlyAssigned = Boolean.TRUE.equals(showAssignedOnly.getValue());
-        if (onlyAssigned) {
-            List<PolicyGroupNode> filteredRoots = new ArrayList<>();
-            for (PolicyGroupNode root : policyTreeDc.getItems()) {
-                PolicyGroupNode clone = filterAssignedRecursive(root);
-                if (clone != null) filteredRoots.add(clone);
-            }
-            policyTreeGrid.setItems(filteredRoots, PolicyGroupNode::getChildren);
-        } else {
+        boolean only = Boolean.TRUE.equals(showAssignedOnly.getValue());
+
+        if (!only) {
             policyTreeGrid.setItems(policyTreeDc.getItems(), PolicyGroupNode::getChildren);
+            policyTreeGrid.getDataProvider().refreshAll();
+            return;
         }
+
+        List<PolicyGroupNode> filtered = new ArrayList<>();
+        for (PolicyGroupNode r : policyTreeDc.getItems()) {
+            PolicyGroupNode f = filterAssignedRecursive(r);
+            if (f != null) filtered.add(f);
+        }
+        policyTreeGrid.setItems(filtered, PolicyGroupNode::getChildren);
         policyTreeGrid.getDataProvider().refreshAll();
     }
 
     private PolicyGroupNode filterAssignedRecursive(PolicyGroupNode node) {
-        if (!Boolean.TRUE.equals(node.getGroup())) {
-            return (node.getEffect() != null) ? node : null;
-        }
+        if (!Boolean.TRUE.equals(node.getGroup()))
+            return node.getEffect() != null ? node : null;
 
-        List<PolicyGroupNode> filteredChildren = new ArrayList<>();
-        for (PolicyGroupNode child : node.getChildren()) {
-            PolicyGroupNode f = filterAssignedRecursive(child);
-            if (f != null) filteredChildren.add(f);
+        List<PolicyGroupNode> children = new ArrayList<>();
+        for (PolicyGroupNode c : node.getChildren()) {
+            PolicyGroupNode f = filterAssignedRecursive(c);
+            if (f != null) children.add(f);
         }
-        if (!filteredChildren.isEmpty()) {
-            PolicyGroupNode copy = new PolicyGroupNode(node.getName(), true);
-            copy.getChildren().addAll(filteredChildren);
-            return copy;
-        }
-        return null;
+        if (children.isEmpty()) return null;
+
+        PolicyGroupNode copy = new PolicyGroupNode(node.getName(), true);
+        copy.setChildren(children);
+        return copy;
     }
 
-    // ========================= ALLOW ALL / DENY ALL =========================
-
+    // ================================================================
+    //                    TOGGLE ALL (ALLOW / DENY)
+    // ================================================================
     private void toggleAll(Boolean allow) {
         for (PolicyGroupNode root : policyTreeDc.getItems()) {
             applyToChildrenRecursive(root, allow);
@@ -311,17 +309,18 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
 
     private void applyToChildrenRecursive(PolicyGroupNode node, Boolean allow) {
         if (!Boolean.TRUE.equals(node.getGroup())) {
-            node.setAllow(Boolean.TRUE.equals(allow));
-            node.setDeny(!Boolean.TRUE.equals(allow));
-            node.setEffect(Boolean.TRUE.equals(allow) ? "ALLOW" : "DENY");
+            node.setAllow(allow);
+            node.setDeny(!allow);
+            node.setEffect(allow ? "ALLOW" : "DENY");
         }
-        for (PolicyGroupNode child : node.getChildren()) {
-            applyToChildrenRecursive(child, allow);
+        for (PolicyGroupNode c : node.getChildren()) {
+            applyToChildrenRecursive(c, allow);
         }
     }
 
-    // ========================== Policies helper ==========================
-
+    // ================================================================
+    //                COLLECT POLICIES FROM TREE
+    // ================================================================
     private void collectPoliciesRecursive(PolicyGroupNode node, List<ResourcePolicyModel> list) {
         if (!Boolean.TRUE.equals(node.getGroup())) {
             ResourcePolicyModel p = new ResourcePolicyModel();
@@ -329,12 +328,11 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
             p.setType(node.getType());
             p.setResource(node.getResource());
             p.setAction(node.getAction());
-            Object eff = node.getEffect();
-            p.setEffect(eff != null ? eff.toString() : "DENY");
+            p.setEffect(node.getEffect() != null ? node.getEffect() : "DENY");
             list.add(p);
         }
-        for (PolicyGroupNode child : node.getChildren()) {
-            collectPoliciesRecursive(child, list);
+        for (PolicyGroupNode c : node.getChildren()) {
+            collectPoliciesRecursive(c, list);
         }
     }
 }
