@@ -22,7 +22,7 @@ public interface UiMinimalRole extends UiMinimalPolicies {
     @SpecificPolicy(resources = "ui.loginToUi")
     void login();
 
-    @EntityAttributePolicy(entityClass = User.class, attributes = {"id", "version", "username"}, action = EntityAttributePolicyAction.VIEW)
+    @EntityAttributePolicy(entityClass = User.class, attributes = "*", action = EntityAttributePolicyAction.MODIFY)
     @EntityPolicy(entityClass = User.class, actions = EntityPolicyAction.ALL)
     void user();
 }
