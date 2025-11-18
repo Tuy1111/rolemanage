@@ -86,7 +86,10 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         installMatrixColumns();
         installAttrColumns();
         initEntityHeader();
-        initAttrHeader();      // <-- thêm dòng này
+        initAttrHeader();
+
+
+//        makeGridHeadersBold();
 
     }
 
@@ -539,18 +542,24 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
 
         // text "All attributes (*)" dưới cột Attribute
         if (attrCol != null) {
-            row.getCell(attrCol).setText("All attribute (*)");
+            row.getCell(attrCol).setText("All attributes (*)");
         }
 
-        // checkbox View all
+        // ===== HEADER: VIEW ALL =====
         if (viewCol != null) {
             headerAttrViewCb = new Checkbox();
             headerAttrViewCb.addValueChangeListener(e -> {
-                if (updatingAttrHeaderFromRows) return; // đang sync từ rows lên -> bỏ qua
+                if (updatingAttrHeaderFromRows) return;
 
                 boolean v = Boolean.TRUE.equals(e.getValue());
-                attrMatrixDc.getItems().forEach(r -> r.setCanView(v));
+                attrMatrixDc.getItems().forEach(r -> {
+                    r.setCanView(v);
+                    if (v) r.setCanModify(false);   // chỉ 1 trong 2
+                });
                 attrMatrixDc.setItems(new ArrayList<>(attrMatrixDc.getItems()));
+
+                // ⭐ sync lại header: View / Modify
+                updateAttrHeaderFromRows();
 
                 EntityMatrixRow current = entityMatrixDc.getItemOrNull();
                 if (current != null) {
@@ -560,15 +569,21 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
             row.getCell(viewCol).setComponent(headerAttrViewCb);
         }
 
-        // checkbox Modify all
+        // ===== HEADER: MODIFY ALL =====
         if (modifyCol != null) {
             headerAttrModifyCb = new Checkbox();
             headerAttrModifyCb.addValueChangeListener(e -> {
                 if (updatingAttrHeaderFromRows) return;
 
                 boolean v = Boolean.TRUE.equals(e.getValue());
-                attrMatrixDc.getItems().forEach(r -> r.setCanModify(v));
+                attrMatrixDc.getItems().forEach(r -> {
+                    r.setCanModify(v);
+                    if (v) r.setCanView(false);     // chỉ 1 trong 2
+                });
                 attrMatrixDc.setItems(new ArrayList<>(attrMatrixDc.getItems()));
+
+                // ⭐ sync lại header: View / Modify
+                updateAttrHeaderFromRows();
 
                 EntityMatrixRow current = entityMatrixDc.getItemOrNull();
                 if (current != null) {
@@ -577,7 +592,12 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
             });
             row.getCell(modifyCol).setComponent(headerAttrModifyCb);
         }
+
+        // sync lần đầu theo dữ liệu hiện tại
+        updateAttrHeaderFromRows();
     }
+
+
 
 
     private String computeAttrSummaryFromRows(List<AttrMatrixRow> rows) {
@@ -825,12 +845,18 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
             viewCol.setRenderer(new ComponentRenderer<>(row -> {
                 Checkbox cb = new Checkbox(T(row.getCanView()));
                 cb.addValueChangeListener(e -> {
-                    row.setCanView(T(e.getValue()));
+                    boolean v = T(e.getValue());
+
+                    row.setCanView(v);
+                    if (v) {
+                        // bật View thì tắt Modify
+                        row.setCanModify(false);
+                    }
                     attrMatrixDc.replaceItem(row);
+                    // cần refresh lại toàn bộ items để grid re-render checkbox còn lại
+                    attrMatrixDc.setItems(new ArrayList<>(attrMatrixDc.getItems()));
 
-                    // cập nhật lại header (*)
                     updateAttrHeaderFromRows();
-
                     updateEntityAttributesSummarySafe(row.getEntityName());
                 });
                 return cb;
@@ -843,19 +869,25 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
             modifyCol.setRenderer(new ComponentRenderer<>(row -> {
                 Checkbox cb = new Checkbox(T(row.getCanModify()));
                 cb.addValueChangeListener(e -> {
-                    row.setCanModify(T(e.getValue()));
+                    boolean v = T(e.getValue());
+
+                    row.setCanModify(v);
+                    if (v) {
+                        // bật Modify thì tắt View
+                        row.setCanView(false);
+                    }
                     attrMatrixDc.replaceItem(row);
+                    // refresh lại -> checkbox View trong cùng row sẽ update
+                    attrMatrixDc.setItems(new ArrayList<>(attrMatrixDc.getItems()));
 
-                    // cập nhật lại header (*)
                     updateAttrHeaderFromRows();
-
                     updateEntityAttributesSummarySafe(row.getEntityName());
                 });
                 return cb;
             }));
-
         }
     }
+
 
     // =============================== Events =================================
 
@@ -1097,4 +1129,27 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
     private static Boolean bool(Boolean b) {
         return Boolean.TRUE.equals(b);
     }
+
+//    private void makeGridHeadersBold() {
+//        // Entity grid
+//        entityMatrixTable.getColumns().forEach(col -> {
+//            String text = col.getHeaderText();
+//            if (text != null && !text.isEmpty()) {
+//                Span span = new Span(text);
+//                span.getStyle().set("font-weight", "600");
+//                col.setHeader(span);
+//            }
+//        });
+//
+//        // Attribute grid
+//        attrMatrixTable.getColumns().forEach(col -> {
+//            String text = col.getHeaderText();
+//            if (text != null && !text.isEmpty()) {
+//                Span span = new Span(text);
+//                span.getStyle().set("font-weight", "600");
+//                col.setHeader(span);
+//            }
+//        });
+//    }
+
 }
