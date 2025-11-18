@@ -3,14 +3,10 @@ package com.vn.rm.view.rolemanage.entityfragment;
 import com.google.common.base.Strings;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.grid.HeaderRow;
-import com.vaadin.flow.component.html.Header;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
-import groovy.lang.MetaClass;
 import io.jmix.core.Metadata;
 import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.fragment.Fragment;
@@ -24,6 +20,7 @@ import io.jmix.security.model.EntityPolicyAction;
 import io.jmix.security.model.ResourcePolicyEffect;
 import io.jmix.security.model.ResourcePolicyModel;
 import io.jmix.security.model.ResourcePolicyType;
+import io.jmix.securityflowui.view.resourcepolicy.AttributeResourceModel;
 import io.jmix.securityflowui.view.resourcepolicy.ResourcePolicyViewUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -44,9 +41,9 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
     private DataGrid<EntityMatrixRow> entityMatrixTable;
 
     @ViewComponent
-    private CollectionContainer<AttrMatrixRow> attrMatrixDc;
+    private CollectionContainer<AttributeResourceModel> attrMatrixDc;
     @ViewComponent
-    private DataGrid<AttrMatrixRow> attrMatrixTable;
+    private DataGrid<AttributeResourceModel> attrMatrixTable;
 
     @ViewComponent
     private Span attrEntityLabel;
@@ -58,23 +55,25 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
     @Autowired
     private Metadata metadata;
 
-    // Header checkbox cho "Allow all"
+    // Header checkbox cho entity grid
     private Checkbox headerAllowAllCb;
     private Checkbox headerCreateCb;
     private Checkbox headerReadCb;
     private Checkbox headerUpdateCb;
     private Checkbox headerDeleteCb;
+
+    // Header checkbox cho attr grid
     private Checkbox headerAttrViewCb;
     private Checkbox headerAttrModifyCb;
-
-
 
     // tránh vòng lặp khi cập nhật từ rows lên header
     private boolean updatingHeaderFromRows = false;
     private boolean updatingAttrHeaderFromRows = false;
+
     // =========================== Cache & guards ==============================
 
-    private final Map<String, List<AttrMatrixRow>> attrCache = new HashMap<>();
+    // key = entityName, value = danh sách AttributeResourceModel cho entity đó
+    private final Map<String, List<AttributeResourceModel>> attrCache = new HashMap<>();
     private boolean syncingAttrSummary = false;
 
     // ============================== Lifecycle ================================
@@ -87,10 +86,6 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         installAttrColumns();
         initEntityHeader();
         initAttrHeader();
-
-
-//        makeGridHeadersBold();
-
     }
 
     // ========================================================================
@@ -113,7 +108,6 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
 
         refreshMatrixFromPolicies();
     }
-
 
     public List<ResourcePolicyModel> buildPoliciesFromMatrix() {
         List<ResourcePolicyModel> raw = entityMatrixDc.getItems().stream()
@@ -145,9 +139,11 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                         return list.stream();
 
                     // ENTITY_ATTRIBUTE
-                    List<AttrMatrixRow> attrs = Optional.ofNullable(attrCache.get(entity)).orElseGet(List::of);
+                    List<AttributeResourceModel> attrs =
+                            Optional.ofNullable(attrCache.get(entity)).orElseGet(List::of);
 
                     if (attrs.isEmpty()) {
+                        // dùng pattern lưu trong EntityMatrixRow nếu có
                         String pattern = Strings.nullToEmpty(r.getAttributes()).trim();
                         if (!pattern.isEmpty())
                             addAttrPolicy(list, entity, pattern,
@@ -156,39 +152,40 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                         return list.stream();
                     }
 
-                    AttrMatrixRow star = attrs.stream()
-                            .filter(a -> "*".equals(a.getAttribute()))
-                            .findFirst()
-                            .orElse(null);
+                    boolean fullView = !attrs.isEmpty() && attrs.stream().allMatch(a -> T(a.getView()));
+                    boolean fullModify = !attrs.isEmpty() && attrs.stream().allMatch(a -> T(a.getModify()));
 
-                    if (star != null && (T(star.getCanView()) || T(star.getCanModify()))) {
-                        if (T(star.getCanView()))
+                    if (fullView || fullModify) {
+                        // nếu full theo từng action -> dùng wildcard entity.*
+                        if (fullView) {
                             list.add(newAttrPolicy(entity, "*", EntityAttributePolicyAction.VIEW.getId()));
-                        if (T(star.getCanModify()))
+                        }
+                        if (fullModify) {
                             list.add(newAttrPolicy(entity, "*", EntityAttributePolicyAction.MODIFY.getId()));
+                        }
                     } else {
-                        attrs.stream()
-                                .filter(a -> !"*".equals(a.getAttribute()))
-                                .forEach(a -> {
-                                    if (T(a.getCanView()))
-                                        list.add(newAttrPolicy(entity, a.getAttribute(),
-                                                EntityAttributePolicyAction.VIEW.getId()));
-                                    if (T(a.getCanModify()))
-                                        list.add(newAttrPolicy(entity, a.getAttribute(),
-                                                EntityAttributePolicyAction.MODIFY.getId()));
-                                });
+                        // chỉ add các attr được chọn
+                        attrs.forEach(a -> {
+                            if (T(a.getView()))
+                                list.add(newAttrPolicy(entity, a.getName(),
+                                        EntityAttributePolicyAction.VIEW.getId()));
+                            if (T(a.getModify()))
+                                list.add(newAttrPolicy(entity, a.getName(),
+                                        EntityAttributePolicyAction.MODIFY.getId()));
+                        });
 
+                        // nếu tất cả attr đều được chọn cho ít nhất 1 trong 2 quyền
                         boolean allSelected = attrs.stream()
-                                .filter(a -> !"*".equals(a.getAttribute()))
-                                .allMatch(a -> T(a.getCanView()) || T(a.getCanModify()));
+                                .allMatch(a -> T(a.getView()) || T(a.getModify()));
                         if (allSelected) {
+                            // remove policies chi tiết rồi thay bằng wildcard
                             list.removeIf(p -> isEntityAttributeType(p.getType())
                                     && p.getResource() != null
                                     && p.getResource().startsWith(entity + ".")
                                     && !p.getResource().equals(entity + ".*"));
 
-                            boolean anyView = attrs.stream().anyMatch(a -> T(a.getCanView()));
-                            boolean anyModify = attrs.stream().anyMatch(a -> T(a.getCanModify()));
+                            boolean anyView = attrs.stream().anyMatch(a -> T(a.getView()));
+                            boolean anyModify = attrs.stream().anyMatch(a -> T(a.getModify()));
                             if (anyView)
                                 list.add(newAttrPolicy(entity, "*", EntityAttributePolicyAction.VIEW.getId()));
                             if (anyModify)
@@ -236,6 +233,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         entityMatrixDc.setItems(rows);
     }
 
+    // ---------------------------- Entity header -----------------------------
 
     protected void initEntityHeader() {
         // thêm 1 header row nằm dưới hàng tiêu đề mặc định
@@ -347,7 +345,6 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         updateHeaderAllowAllFromRows();
     }
 
-
     private void refreshMatrixFromPolicies() {
         List<EntityMatrixRow> rows = new ArrayList<>(entityMatrixDc.getItems());
 
@@ -410,6 +407,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                 }
 
             } else if (isEntityAttr) {
+                // nếu có wildcard entity.* thì chỉ set summary = "*"
                 String res = p.getResource();
                 if (res.endsWith(".*")) {
                     String entity = res.substring(0, res.length() - 2);
@@ -423,8 +421,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
 
         rows.forEach(this::syncAllowAll);
         entityMatrixDc.setItems(rows);
-        updateHeaderAllowAllFromRows();  // <-- thêm
-
+        updateHeaderAllowAllFromRows();
 
         preloadAllAttributesFromDbAndFillEntitySummary(policies);
 
@@ -441,31 +438,6 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                 attrEntityLabel.setText("");
         }
     }
-    private void updateAttrHeaderFromRows() {
-        if (headerAttrViewCb == null && headerAttrModifyCb == null) {
-            return;
-        }
-
-        updatingAttrHeaderFromRows = true;
-        try {
-            List<AttrMatrixRow> items = attrMatrixDc.getItems();
-            if (items == null || items.isEmpty()) {
-                if (headerAttrViewCb != null) headerAttrViewCb.setValue(false);
-                if (headerAttrModifyCb != null) headerAttrModifyCb.setValue(false);
-                return;
-            }
-
-            boolean allView   = items.stream().allMatch(r -> T(r.getCanView()));
-            boolean allModify = items.stream().allMatch(r -> T(r.getCanModify()));
-
-            if (headerAttrViewCb != null)   headerAttrViewCb.setValue(allView);
-            if (headerAttrModifyCb != null) headerAttrModifyCb.setValue(allModify);
-        } finally {
-            updatingAttrHeaderFromRows = false;
-        }
-    }
-
-
 
     private void updateHeaderAllowAllFromRows() {
         // nếu tất cả đều null thì khỏi làm gì
@@ -515,7 +487,33 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         }
     }
 
+    // ========================================================================
+    // ======================== Attribute matrix/header =======================
+    // ========================================================================
 
+    private void updateAttrHeaderFromRows() {
+        if (headerAttrViewCb == null && headerAttrModifyCb == null) {
+            return;
+        }
+
+        updatingAttrHeaderFromRows = true;
+        try {
+            List<AttributeResourceModel> items = attrMatrixDc.getItems();
+            if (items == null || items.isEmpty()) {
+                if (headerAttrViewCb != null) headerAttrViewCb.setValue(false);
+                if (headerAttrModifyCb != null) headerAttrModifyCb.setValue(false);
+                return;
+            }
+
+            boolean allView   = items.stream().allMatch(r -> T(r.getView()));
+            boolean allModify = items.stream().allMatch(r -> T(r.getModify()));
+
+            if (headerAttrViewCb != null)   headerAttrViewCb.setValue(allView);
+            if (headerAttrModifyCb != null) headerAttrModifyCb.setValue(allModify);
+        } finally {
+            updatingAttrHeaderFromRows = false;
+        }
+    }
 
     private void preloadAllAttributesFromDbAndFillEntitySummary(Collection<ResourcePolicyModel> policies) {
         List<EntityMatrixRow> rows = new ArrayList<>(entityMatrixDc.getItems());
@@ -524,7 +522,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
             if (Strings.isNullOrEmpty(entity) || "*".equals(entity))
                 continue;
 
-            List<AttrMatrixRow> attrRows = buildAttrRowsForEntity(entity);
+            List<AttributeResourceModel> attrRows = buildAttrRowsForEntity(entity);
             applyAttrPolicies(attrRows, entity, policies);
             attrCache.put(entity, attrRows);
             String summary = computeAttrSummaryFromRows(attrRows);
@@ -536,9 +534,9 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
     private void initAttrHeader() {
         HeaderRow row = attrMatrixTable.appendHeaderRow();
 
-        DataGrid.Column<AttrMatrixRow> attrCol   = attrMatrixTable.getColumnByKey("attribute");
-        DataGrid.Column<AttrMatrixRow> viewCol   = attrMatrixTable.getColumnByKey("viewCol");
-        DataGrid.Column<AttrMatrixRow> modifyCol = attrMatrixTable.getColumnByKey("modifyCol");
+        DataGrid.Column<AttributeResourceModel> attrCol   = attrMatrixTable.getColumnByKey("name");
+        DataGrid.Column<AttributeResourceModel> viewCol   = attrMatrixTable.getColumnByKey("viewCol");
+        DataGrid.Column<AttributeResourceModel> modifyCol = attrMatrixTable.getColumnByKey("modifyCol");
 
         // text "All attributes (*)" dưới cột Attribute
         if (attrCol != null) {
@@ -553,12 +551,11 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
 
                 boolean v = Boolean.TRUE.equals(e.getValue());
                 attrMatrixDc.getItems().forEach(r -> {
-                    r.setCanView(v);
-                    if (v) r.setCanModify(false);   // chỉ 1 trong 2
+                    r.setView(v);
+                    if (v) r.setModify(false); // rule: chỉ 1 trong 2
                 });
                 attrMatrixDc.setItems(new ArrayList<>(attrMatrixDc.getItems()));
 
-                // ⭐ sync lại header: View / Modify
                 updateAttrHeaderFromRows();
 
                 EntityMatrixRow current = entityMatrixDc.getItemOrNull();
@@ -577,12 +574,11 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
 
                 boolean v = Boolean.TRUE.equals(e.getValue());
                 attrMatrixDc.getItems().forEach(r -> {
-                    r.setCanModify(v);
-                    if (v) r.setCanView(false);     // chỉ 1 trong 2
+                    r.setModify(v);
+                    if (v) r.setView(false);
                 });
                 attrMatrixDc.setItems(new ArrayList<>(attrMatrixDc.getItems()));
 
-                // ⭐ sync lại header: View / Modify
                 updateAttrHeaderFromRows();
 
                 EntityMatrixRow current = entityMatrixDc.getItemOrNull();
@@ -597,41 +593,27 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         updateAttrHeaderFromRows();
     }
 
-
-
-
-    private String computeAttrSummaryFromRows(List<AttrMatrixRow> rows) {
+    private String computeAttrSummaryFromRows(List<AttributeResourceModel> rows) {
         if (rows == null || rows.isEmpty())
             return null;
 
-        AttrMatrixRow star = rows.stream()
-                .filter(a -> "*".equals(a.getAttribute()))
-                .findFirst()
-                .orElse(null);
-        List<AttrMatrixRow> normals = rows.stream()
-                .filter(a -> !"*".equals(a.getAttribute()))
-                .toList();
+        boolean fullView = !rows.isEmpty() && rows.stream().allMatch(a -> T(a.getView()));
+        boolean fullModify = !rows.isEmpty() && rows.stream().allMatch(a -> T(a.getModify()));
 
-        boolean starView = star != null && T(star.getCanView());
-        boolean starModify = star != null && T(star.getCanModify());
-
-        boolean fullView = !normals.isEmpty() && normals.stream().allMatch(a -> T(a.getCanView()));
-        boolean fullModify = !normals.isEmpty() && normals.stream().allMatch(a -> T(a.getCanModify()));
-
-        if ((starView && starModify) || (fullView && fullModify))
+        if (fullView && fullModify)
             return "*,*";
-        if (starView || starModify || fullView || fullModify)
+        if (fullView || fullModify)
             return "*";
 
-        long selected = normals.stream()
-                .filter(a -> T(a.getCanView()) || T(a.getCanModify()))
+        long selected = rows.stream()
+                .filter(a -> T(a.getView()) || T(a.getModify()))
                 .count();
         if (selected == 0)
             return null;
 
-        return normals.stream()
-                .filter(a -> T(a.getCanView()) || T(a.getCanModify()))
-                .map(AttrMatrixRow::getAttribute)
+        return rows.stream()
+                .filter(a -> T(a.getView()) || T(a.getModify()))
+                .map(AttributeResourceModel::getName)
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .collect(Collectors.joining(","));
     }
@@ -650,7 +632,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
             attrEntityLabel.setText("Entity: " + entityName);
         }
 
-        List<AttrMatrixRow> rows = attrCache.get(entityName);
+        List<AttributeResourceModel> rows = attrCache.get(entityName);
         if (rows == null) {
             rows = buildAttrRowsForEntity(entityName);
             applyAttrPolicies(
@@ -662,35 +644,34 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         }
 
         attrMatrixDc.setItems(new ArrayList<>(rows));
+        updateAttrHeaderFromRows();
         updateEntityAttributesSummarySafe(entityName);
     }
 
-    private List<AttrMatrixRow> buildAttrRowsForEntity(String entityName) {
+    private List<AttributeResourceModel> buildAttrRowsForEntity(String entityName) {
         Map<String, String> attrs = resourcePolicyEditorUtils.getEntityAttributeOptionsMap(entityName);
 
-        // Không tạo row "*" nữa, nếu không có attribute thì trả về list rỗng
         if (attrs.isEmpty()) {
             return List.of();
         }
 
-        return attrs.keySet().stream()
-                // Phòng trường hợp trong map có key "*" thì cũng bỏ luôn
-                .filter(name -> !"*".equals(name))
-                .map(name -> {
-                    AttrMatrixRow r = metadata.create(AttrMatrixRow.class);
-                    r.setEntityName(entityName);
-                    r.setAttribute(name);
-                    r.setCanView(false);
-                    r.setCanModify(false);
+        return attrs.entrySet().stream()
+                // BỎ DÒNG "*" Ở ĐÂY
+                .filter(e -> !"*".equals(e.getKey()))
+                .map(e -> {
+                    AttributeResourceModel r = metadata.create(AttributeResourceModel.class);
+                    r.setName(e.getKey());
+                    r.setCaption(e.getValue());
+                    r.setView(false);
+                    r.setModify(false);
                     return r;
                 })
-                // So sánh bình thường, không ưu tiên "*" nữa
-                .sorted((a, b) -> a.getAttribute().compareToIgnoreCase(b.getAttribute()))
+                .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
                 .collect(Collectors.toList());
     }
 
 
-    private void applyAttrPolicies(List<AttrMatrixRow> rows,
+    private void applyAttrPolicies(List<AttributeResourceModel> rows,
                                    String entityName,
                                    Collection<ResourcePolicyModel> policies) {
 
@@ -700,41 +681,32 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                 .filter(p -> p.getEffect() == null || p.getEffect() == ResourcePolicyEffect.ALLOW)
                 .collect(Collectors.groupingBy(ResourcePolicyModel::getResource));
 
+        // wildcard entity.*
+        String wildcardRes = entityName + ".*";
+        List<ResourcePolicyModel> starPolicies = byRes.getOrDefault(wildcardRes, List.of());
+        boolean wildcardView = starPolicies.stream()
+                .anyMatch(p -> EntityAttributePolicyAction.VIEW.getId().equals(p.getAction()));
+        boolean wildcardModify = starPolicies.stream()
+                .anyMatch(p -> EntityAttributePolicyAction.MODIFY.getId().equals(p.getAction()));
+
         rows.forEach(r -> {
-            String attr = r.getAttribute();
+            String attr = r.getName();
             if (attr == null)
                 return;
 
-            if ("*".equals(attr)) {
-                String wildcardRes = entityName + ".*";
-                List<ResourcePolicyModel> starPolicies = byRes.getOrDefault(wildcardRes, List.of());
-                starPolicies.forEach(p -> {
-                    if (EntityAttributePolicyAction.VIEW.getId().equals(p.getAction()))
-                        r.setCanView(true);
-                    if (EntityAttributePolicyAction.MODIFY.getId().equals(p.getAction()))
-                        r.setCanModify(true);
-                });
-            } else {
-                String res = entityName + "." + attr;
-                List<ResourcePolicyModel> ps = byRes.getOrDefault(res, List.of());
-                ps.forEach(p -> {
-                    if (EntityAttributePolicyAction.VIEW.getId().equals(p.getAction()))
-                        r.setCanView(true);
-                    if (EntityAttributePolicyAction.MODIFY.getId().equals(p.getAction()))
-                        r.setCanModify(true);
-                });
-            }
-        });
+            // từ wildcard
+            if (wildcardView) r.setView(true);
+            if (wildcardModify) r.setModify(true);
 
-        rows.stream().filter(r -> "*".equals(r.getAttribute())).findFirst().ifPresent(star -> {
-            if (T(star.getCanView()) || T(star.getCanModify())) {
-                rows.stream().filter(r -> !"*".equals(r.getAttribute())).forEach(r -> {
-                    if (T(star.getCanView()))
-                        r.setCanView(true);
-                    if (T(star.getCanModify()))
-                        r.setCanModify(true);
-                });
-            }
+            // từ policy chi tiết
+            String res = entityName + "." + attr;
+            List<ResourcePolicyModel> ps = byRes.getOrDefault(res, List.of());
+            ps.forEach(p -> {
+                if (EntityAttributePolicyAction.VIEW.getId().equals(p.getAction()))
+                    r.setView(true);
+                if (EntityAttributePolicyAction.MODIFY.getId().equals(p.getAction()))
+                    r.setModify(true);
+            });
         });
     }
 
@@ -770,8 +742,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                     row.setCanCreate(bool(e.getValue()));
                     entityMatrixDc.replaceItem(row);
                     syncAllowAll(row);
-                    updateHeaderAllowAllFromRows();  // <-- thêm
-
+                    updateHeaderAllowAllFromRows();
                 });
                 return cb;
             }));
@@ -786,8 +757,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                     row.setCanRead(bool(e.getValue()));
                     entityMatrixDc.replaceItem(row);
                     syncAllowAll(row);
-                    updateHeaderAllowAllFromRows();  // <-- thêm
-
+                    updateHeaderAllowAllFromRows();
                 });
                 return cb;
             }));
@@ -802,8 +772,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                     row.setCanUpdate(bool(e.getValue()));
                     entityMatrixDc.replaceItem(row);
                     syncAllowAll(row);
-                    updateHeaderAllowAllFromRows();  // <-- thêm
-
+                    updateHeaderAllowAllFromRows();
                 });
                 return cb;
             }));
@@ -818,8 +787,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                     row.setCanDelete(bool(e.getValue()));
                     entityMatrixDc.replaceItem(row);
                     syncAllowAll(row);
-                    updateHeaderAllowAllFromRows();  // <-- thêm
-
+                    updateHeaderAllowAllFromRows();
                 });
                 return cb;
             }));
@@ -840,54 +808,59 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
 
     private void installAttrColumns() {
         // view
-        DataGrid.Column<AttrMatrixRow> viewCol = attrMatrixTable.getColumnByKey("viewCol");
+        DataGrid.Column<AttributeResourceModel> viewCol = attrMatrixTable.getColumnByKey("viewCol");
         if (viewCol != null) {
             viewCol.setRenderer(new ComponentRenderer<>(row -> {
-                Checkbox cb = new Checkbox(T(row.getCanView()));
+                Checkbox cb = new Checkbox(T(row.getView()));
                 cb.addValueChangeListener(e -> {
                     boolean v = T(e.getValue());
 
-                    row.setCanView(v);
+                    row.setView(v);
                     if (v) {
                         // bật View thì tắt Modify
-                        row.setCanModify(false);
+                        row.setModify(false);
                     }
                     attrMatrixDc.replaceItem(row);
-                    // cần refresh lại toàn bộ items để grid re-render checkbox còn lại
                     attrMatrixDc.setItems(new ArrayList<>(attrMatrixDc.getItems()));
 
                     updateAttrHeaderFromRows();
-                    updateEntityAttributesSummarySafe(row.getEntityName());
+
+                    EntityMatrixRow current = entityMatrixDc.getItemOrNull();
+                    if (current != null) {
+                        updateEntityAttributesSummarySafe(current.getEntityName());
+                    }
                 });
                 return cb;
             }));
         }
 
         // modify
-        DataGrid.Column<AttrMatrixRow> modifyCol = attrMatrixTable.getColumnByKey("modifyCol");
+        DataGrid.Column<AttributeResourceModel> modifyCol = attrMatrixTable.getColumnByKey("modifyCol");
         if (modifyCol != null) {
             modifyCol.setRenderer(new ComponentRenderer<>(row -> {
-                Checkbox cb = new Checkbox(T(row.getCanModify()));
+                Checkbox cb = new Checkbox(T(row.getModify()));
                 cb.addValueChangeListener(e -> {
                     boolean v = T(e.getValue());
 
-                    row.setCanModify(v);
+                    row.setModify(v);
                     if (v) {
                         // bật Modify thì tắt View
-                        row.setCanView(false);
+                        row.setView(false);
                     }
                     attrMatrixDc.replaceItem(row);
-                    // refresh lại -> checkbox View trong cùng row sẽ update
                     attrMatrixDc.setItems(new ArrayList<>(attrMatrixDc.getItems()));
 
                     updateAttrHeaderFromRows();
-                    updateEntityAttributesSummarySafe(row.getEntityName());
+
+                    EntityMatrixRow current = entityMatrixDc.getItemOrNull();
+                    if (current != null) {
+                        updateEntityAttributesSummarySafe(current.getEntityName());
+                    }
                 });
                 return cb;
             }));
         }
     }
-
 
     // =============================== Events =================================
 
@@ -954,43 +927,32 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         if (entityRow == null)
             return;
 
-        List<AttrMatrixRow> attrs = new ArrayList<>(attrMatrixDc.getItems());
+        List<AttributeResourceModel> attrs = new ArrayList<>(attrMatrixDc.getItems());
         if (attrs.isEmpty()) {
             entityRow.setAttributes(null);
             entityMatrixDc.replaceItem(entityRow);
             return;
         }
 
-        AttrMatrixRow star = attrs.stream()
-                .filter(a -> "*".equals(a.getAttribute()))
-                .findFirst()
-                .orElse(null);
-        List<AttrMatrixRow> normals = attrs.stream()
-                .filter(a -> !"*".equals(a.getAttribute()))
-                .toList();
-
-        boolean starView = star != null && T(star.getCanView());
-        boolean starModify = star != null && T(star.getCanModify());
-
-        boolean fullView = !normals.isEmpty() && normals.stream().allMatch(a -> T(a.getCanView()));
-        boolean fullModify = !normals.isEmpty() && normals.stream().allMatch(a -> T(a.getCanModify()));
+        boolean fullView = !attrs.isEmpty() && attrs.stream().allMatch(a -> T(a.getView()));
+        boolean fullModify = !attrs.isEmpty() && attrs.stream().allMatch(a -> T(a.getModify()));
 
         String pattern;
-        if ((starView && starModify) || (fullView && fullModify)) {
+        if (fullView && fullModify) {
             pattern = "*,*";
-        } else if (starView || starModify || fullView || fullModify) {
+        } else if (fullView || fullModify) {
             pattern = "*";
         } else {
-            long selected = normals.stream()
-                    .filter(a -> T(a.getCanView()) || T(a.getCanModify()))
+            long selected = attrs.stream()
+                    .filter(a -> T(a.getView()) || T(a.getModify()))
                     .count();
 
             if (selected == 0) {
                 pattern = "";
             } else {
-                pattern = normals.stream()
-                        .filter(a -> T(a.getCanView()) || T(a.getCanModify()))
-                        .map(AttrMatrixRow::getAttribute)
+                pattern = attrs.stream()
+                        .filter(a -> T(a.getView()) || T(a.getModify()))
+                        .map(AttributeResourceModel::getName)
                         .sorted(String.CASE_INSENSITIVE_ORDER)
                         .collect(Collectors.joining(","));
             }
@@ -1129,27 +1091,4 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
     private static Boolean bool(Boolean b) {
         return Boolean.TRUE.equals(b);
     }
-
-//    private void makeGridHeadersBold() {
-//        // Entity grid
-//        entityMatrixTable.getColumns().forEach(col -> {
-//            String text = col.getHeaderText();
-//            if (text != null && !text.isEmpty()) {
-//                Span span = new Span(text);
-//                span.getStyle().set("font-weight", "600");
-//                col.setHeader(span);
-//            }
-//        });
-//
-//        // Attribute grid
-//        attrMatrixTable.getColumns().forEach(col -> {
-//            String text = col.getHeaderText();
-//            if (text != null && !text.isEmpty()) {
-//                Span span = new Span(text);
-//                span.getStyle().set("font-weight", "600");
-//                col.setHeader(span);
-//            }
-//        });
-//    }
-
 }

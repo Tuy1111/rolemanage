@@ -12,8 +12,6 @@
         <!-- Ma trận quyền theo entity -->
         <collection id="entityMatrixDc"
                     class="com.vn.rm.view.rolemanage.entityfragment.EntityMatrixRow"/>
-        <collection id="attrMatrixDc"
-                    class="com.vn.rm.view.rolemanage.entityfragment.AttrMatrixRow"/>
         <collection id="childRolesDc"
                     class="io.jmix.security.model.ResourceRoleModel"/>
 

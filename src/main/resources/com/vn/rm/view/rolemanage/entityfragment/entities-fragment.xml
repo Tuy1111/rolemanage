@@ -5,7 +5,8 @@
         <collection id="resourcePoliciesDc" class="io.jmix.security.model.ResourcePolicyModel"/>
         <!-- Ma trận quyền theo entity -->
         <collection id="entityMatrixDc" class="com.vn.rm.view.rolemanage.entityfragment.EntityMatrixRow"/>
-        <collection id="attrMatrixDc" class="com.vn.rm.view.rolemanage.entityfragment.AttrMatrixRow"/>
+        <collection id="attrMatrixDc" class="io.jmix.securityflowui.view.resourcepolicy.AttributeResourceModel"/>
+
     </data>
 
     <content>
@@ -40,7 +41,7 @@
                               height="100%"
                               themeNames="compact">
                         <columns resizable="true">
-                            <column property="attribute" header="Attribute" width="320px"/>
+                            <column property="name" header="Attribute" width="320px"/>
                             <column key="viewCol" header="View"/>
                             <column key="modifyCol" header="Modify"/>
                         </columns>

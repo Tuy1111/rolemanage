@@ -1,7 +1,6 @@
 package com.vn.rm.security;
 
 import com.vn.rm.entity.User;
-import com.vn.rm.view.rolemanage.entityfragment.AttrMatrixRow;
 import com.vn.rm.view.rolemanage.entityfragment.EntityMatrixRow;
 import io.jmix.core.entity.KeyValueEntity;
 import io.jmix.datatoolsflowui.view.entityinfo.model.InfoValue;
@@ -32,11 +31,6 @@ public interface FullAccessRole {
     @SpecificPolicy(resources = "*")
     void fullAccess();
 
-    @EntityPolicy(entityClass = AttrMatrixRow.class, actions = EntityPolicyAction.ALL)
-    @EntityAttributePolicy(entityClass = AttrMatrixRow.class,
-            attributes = "*",
-            action = EntityAttributePolicyAction.MODIFY)
-    void attrMatrixRow();
 
     @EntityAttributePolicy(
             entityName = "*",
@@ -44,6 +38,7 @@ public interface FullAccessRole {
             action = EntityAttributePolicyAction.MODIFY
     )
     void allAttributesAll();
+
     @EntityPolicy(entityClass = AbstractSingleFilterCondition.class, actions = EntityPolicyAction.ALL)
     @EntityAttributePolicy(entityClass = AbstractSingleFilterCondition.class, attributes = "*", action = EntityAttributePolicyAction.VIEW)
     void abstractSingleFilterCondition();
