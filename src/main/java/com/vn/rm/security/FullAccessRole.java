@@ -1,6 +1,5 @@
 package com.vn.rm.security;
 
-import com.vn.rm.entity.HoangAnh;
 import com.vn.rm.entity.User;
 import com.vn.rm.view.rolemanage.entityfragment.AttrMatrixRow;
 import com.vn.rm.view.rolemanage.entityfragment.EntityMatrixRow;
@@ -85,9 +84,7 @@ public interface FullAccessRole {
     @EntityAttributePolicy(entityClass = HeaderFilterCondition.class, attributes = "*", action = EntityAttributePolicyAction.VIEW)
     void headerFilterCondition();
 
-    @EntityPolicy(entityClass = HoangAnh.class, actions = EntityPolicyAction.ALL)
-    @EntityAttributePolicy(entityClass = HoangAnh.class, attributes = "*", action = EntityAttributePolicyAction.VIEW)
-    void hoangAnh();
+
 
     @EntityPolicy(entityClass = InfoValue.class, actions = EntityPolicyAction.ALL)
     @EntityAttributePolicy(entityClass = InfoValue.class, attributes = "*", action = EntityAttributePolicyAction.VIEW)

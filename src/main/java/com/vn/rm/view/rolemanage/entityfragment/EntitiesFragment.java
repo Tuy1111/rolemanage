@@ -20,8 +20,6 @@ import io.jmix.security.model.ResourcePolicyEffect;
 import io.jmix.security.model.ResourcePolicyModel;
 import io.jmix.security.model.ResourcePolicyType;
 import io.jmix.securityflowui.view.resourcepolicy.ResourcePolicyViewUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
@@ -29,8 +27,6 @@ import java.util.stream.Collectors;
 
 @FragmentDescriptor("entities-fragment.xml")
 public class EntitiesFragment extends Fragment<VerticalLayout> {
-
-    private static final Logger log = LoggerFactory.getLogger(EntitiesFragment.class);
 
     // ============================= UI components =============================
 
@@ -64,115 +60,41 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
 
     // ============================== Lifecycle ================================
 
-
-
     @Subscribe
     public void onReady(Fragment.ReadyEvent event) {
-        log.info("=== EntitiesFragment.onReady() called ===");
-        // thay cho onInit + onReady cũ
         entityMatrixTable.setSelectionMode(DataGrid.SelectionMode.SINGLE);
         buildMatrixSkeleton();
-        log.info("Matrix skeleton built, entities count: {}", entityMatrixDc.getItems().size());
         installMatrixColumns();
         installAttrColumns();
-
-        // Không gọi refreshMatrixFromPolicies() ở đây vì dữ liệu chưa được load từ DB
-        // Sẽ được gọi trong initPolicies() sau khi view cha set dữ liệu
-        log.info("Fragment ready, waiting for policies from parent view");
+        // Không gọi refreshMatrixFromPolicies() ở đây,
+        // sẽ được gọi trong initPolicies() từ view cha.
     }
 
     // ========================================================================
     // ============ API để view cha có thể gọi khi cần ========================
     // ========================================================================
 
-    /**
-     * View cha gọi để set dữ liệu policies vào fragment và reload ma trận.
-     * Tương tự như UserInterfaceFragment.initUi()
-     */
     public void initPolicies(Collection<ResourcePolicyModel> policies) {
-        log.info("=== EntitiesFragment.initPolicies() called ===");
-        int policyCount = policies != null ? policies.size() : 0;
-        log.info("Received {} policies from parent view", policyCount);
-
-        if (policies != null && !policies.isEmpty()) {
-            log.info("Sample policies (first 5):");
-            policies.stream().limit(5).forEach(p -> {
-                log.info("  - Type: {}, Resource: {}, Action: {}, Effect: {}",
-                        p.getType(), p.getResource(), p.getAction(), p.getEffect());
-            });
-
-            // Đếm số lượng policies theo type
-            // getType() có thể trả về String hoặc ResourcePolicyType enum
-            // Trong DB có thể lưu là "entity" (chữ thường) hoặc "ENTITY" (chữ hoa)
-            long entityCount = policies.stream()
-                    .filter(p -> isEntityType(p.getType()))
-                    .count();
-            long attrCount = policies.stream()
-                    .filter(p -> isEntityAttributeType(p.getType()))
-                    .count();
-            long viewCount = policies.stream()
-                    .filter(p -> {
-                        Object type = p.getType();
-                        return type != null && (
-                                "VIEW".equals(type.toString()) ||
-                                        type.toString().contains("VIEW")
-                        );
-                    })
-                    .count();
-            long otherCount = policies.size() - entityCount - attrCount - viewCount;
-
-            log.info("Policy breakdown - ENTITY: {}, ENTITY_ATTRIBUTE: {}, VIEW: {}, Other: {}",
-                    entityCount, attrCount, viewCount, otherCount);
-
-            // Log tất cả ENTITY và ENTITY_ATTRIBUTE policies
-            if (entityCount > 0 || attrCount > 0) {
-                log.info("ENTITY and ENTITY_ATTRIBUTE policies found: {} ENTITY, {} ENTITY_ATTRIBUTE", entityCount, attrCount);
-                policies.stream()
-                        .filter(p -> isEntityType(p.getType()) || isEntityAttributeType(p.getType()))
-                        .forEach(p -> {
-                            log.info("  - Type: {}, Resource: {}, Action: {}, Effect: {}",
-                                    p.getType(), p.getResource(), p.getAction(), p.getEffect());
-                        });
-            } else {
-                log.warn("⚠️ NO ENTITY or ENTITY_ATTRIBUTE policies found! Matrix will be empty.");
-                log.warn("All policies are of type: {}",
-                        policies.stream().map(p -> String.valueOf(p.getType())).distinct().collect(Collectors.joining(", ")));
-            }
-        }
-
         if (policies != null) {
             resourcePoliciesDc.setItems(new ArrayList<>(policies));
         } else {
             resourcePoliciesDc.setItems(Collections.emptyList());
         }
-        log.info("Set {} items to resourcePoliciesDc", resourcePoliciesDc.getItems().size());
 
-        // Đảm bảo fragment đã được khởi tạo đầy đủ trước khi refresh
         if (entityMatrixDc.getItems().isEmpty()) {
-            log.warn("Entity matrix is empty, initializing now...");
             entityMatrixTable.setSelectionMode(DataGrid.SelectionMode.SINGLE);
             buildMatrixSkeleton();
             installMatrixColumns();
             installAttrColumns();
         }
 
-        log.info("Calling refreshMatrixFromPolicies()...");
         refreshMatrixFromPolicies();
-        log.info("refreshMatrixFromPolicies() completed. Entity matrix rows: {}", entityMatrixDc.getItems().size());
     }
 
-    /**
-     * View cha có thể gọi để reload ma trận từ resourcePoliciesDc
-     * (khi thay đổi list policies từ bên ngoài).
-     */
     public void reloadFromPolicies() {
         refreshMatrixFromPolicies();
     }
 
-    /**
-     * View cha gọi lúc save, để build list ResourcePolicyModel
-     * tương ứng từ ma trận entity + attributes.
-     */
     public List<ResourcePolicyModel> buildPoliciesFromMatrix() {
         List<ResourcePolicyModel> raw = entityMatrixDc.getItems().stream()
                 .filter(r -> !Strings.isNullOrEmpty(r.getEntityName()))
@@ -199,7 +121,6 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                     if (T(r.getCanDelete()))
                         list.add(newEntityPolicy(entity, EntityPolicyAction.DELETE.getId()));
 
-                    // Không có CRUD => bỏ qua attr
                     if (!(T(r.getCanCreate()) || T(r.getCanRead()) || T(r.getCanUpdate()) || T(r.getCanDelete())))
                         return list.stream();
 
@@ -259,7 +180,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                 })
                 .collect(Collectors.toList());
 
-        // dedup theo khóa logic
+        // dedup
         Set<String> seen = new HashSet<>();
         List<ResourcePolicyModel> dedup = new ArrayList<>();
         for (ResourcePolicyModel p : raw) {
@@ -268,7 +189,6 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                 dedup.add(p);
         }
 
-        // nén wildcard: nếu có entity.* cho VIEW/MODIFY -> bỏ field policies tương ứng
         return compressWildcard(dedup);
     }
 
@@ -295,16 +215,9 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         entityMatrixDc.setItems(rows);
     }
 
-    /**
-     * Đọc resourcePoliciesDc và tick CRUD + attributes cho bảng entity.
-     * Chấp nhận effect = null hoặc ALLOW.
-     */
     private void refreshMatrixFromPolicies() {
-        log.debug("=== refreshMatrixFromPolicies() started ===");
         List<EntityMatrixRow> rows = new ArrayList<>(entityMatrixDc.getItems());
-        log.debug("Entity matrix rows count: {}", rows.size());
 
-        // reset state
         rows.forEach(r -> {
             r.setAllowAll(false);
             r.setCanCreate(false);
@@ -316,103 +229,54 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
 
         Collection<ResourcePolicyModel> policies =
                 Optional.ofNullable(resourcePoliciesDc.getItems()).orElseGet(List::of);
-        log.debug("Processing {} policies", policies.size());
 
-        // map entity -> row cho lookup nhanh
         Map<String, EntityMatrixRow> rowByEntity = rows.stream()
                 .filter(r -> !Strings.isNullOrEmpty(r.getEntityName()))
                 .filter(r -> !"*".equals(r.getEntityName()))
                 .collect(Collectors.toMap(EntityMatrixRow::getEntityName, r -> r));
-        log.debug("Entity lookup map size: {}", rowByEntity.size());
-        log.info("Sample entities in matrix (first 5): {}",
-                rowByEntity.keySet().stream().limit(5).collect(Collectors.joining(", ")));
-
-        // apply policies
-        int entityPolicyCount = 0;
-        int attrPolicyCount = 0;
-        int skippedNullResource = 0;
-        int skippedNotAllow = 0;
-        int skippedNotEntityType = 0;
 
         for (ResourcePolicyModel p : policies) {
-            if (p.getResource() == null) {
-                skippedNullResource++;
+            if (p.getResource() == null)
                 continue;
-            }
-            // Kiểm tra effect - có thể là enum hoặc string "ALLOW"/"allow"
+
             Object effect = p.getEffect();
-            boolean allow = false;
+            boolean allow;
             if (effect == null) {
-                allow = true; // null được coi là ALLOW
+                allow = true;
             } else if (effect == ResourcePolicyEffect.ALLOW) {
                 allow = true;
             } else {
                 String effectStr = effect.toString();
-                allow = "ALLOW".equalsIgnoreCase(effectStr) || "allow".equalsIgnoreCase(effectStr);
+                allow = "ALLOW".equalsIgnoreCase(effectStr);
             }
-
-            if (!allow) {
-                skippedNotAllow++;
-                log.debug("Skipping policy with effect: {} (type: {})", p.getEffect(),
-                        p.getEffect() != null ? p.getEffect().getClass().getName() : "null");
+            if (!allow)
                 continue;
-            }
 
-            log.debug("Policy passed effect check: resource={}, effect={}", p.getResource(), p.getEffect());
-
-            // Kiểm tra type với cả enum và string (chữ thường/chữ hoa)
             Object type = p.getType();
             boolean isEntity = isEntityType(type);
             boolean isEntityAttr = isEntityAttributeType(type);
 
-            if (!isEntity && !isEntityAttr) {
-                skippedNotEntityType++;
+            if (!isEntity && !isEntityAttr)
                 continue;
-            }
-
-            log.debug("Processing policy: type={}, resource={}, action={}, effect={}, isEntity={}, isEntityAttr={}",
-                    type, p.getResource(), p.getAction(), p.getEffect(), isEntity, isEntityAttr);
 
             if (isEntity) {
-                entityPolicyCount++;
                 String resource = p.getResource();
                 EntityMatrixRow row = rowByEntity.get(resource);
-                if (row == null) {
-                    log.warn("⚠️ Entity policy for '{}' NOT FOUND in matrix! Available entities: {}",
-                            resource,
-                            rowByEntity.keySet().stream().limit(10).collect(Collectors.joining(", ")));
+                if (row == null)
                     continue;
-                }
 
                 String action = p.getAction();
-                log.info("Processing ENTITY policy: resource={}, action={}, CREATE.id={}, READ.id={}, UPDATE.id={}, DELETE.id={}",
-                        resource, action,
-                        EntityPolicyAction.CREATE.getId(),
-                        EntityPolicyAction.READ.getId(),
-                        EntityPolicyAction.UPDATE.getId(),
-                        EntityPolicyAction.DELETE.getId());
-
                 if (EntityPolicyAction.CREATE.getId().equals(action)) {
                     row.setCanCreate(true);
-
                 } else if (EntityPolicyAction.READ.getId().equals(action)) {
                     row.setCanRead(true);
                 } else if (EntityPolicyAction.UPDATE.getId().equals(action)) {
                     row.setCanUpdate(true);
-                    log.info("✓ Applied UPDATE policy to entity: {}", resource);
                 } else if (EntityPolicyAction.DELETE.getId().equals(action)) {
                     row.setCanDelete(true);
-                    log.info("✓ Applied DELETE policy to entity: {}", resource);
-                } else {
-                    log.warn("⚠️ Action '{}' does NOT match! Expected: create={}, read={}, update={}, delete={}",
-                            action,
-                            EntityPolicyAction.CREATE.getId(),
-                            EntityPolicyAction.READ.getId(),
-                            EntityPolicyAction.UPDATE.getId(),
-                            EntityPolicyAction.DELETE.getId());
                 }
+
             } else if (isEntityAttr) {
-                attrPolicyCount++;
                 String res = p.getResource();
                 if (res.endsWith(".*")) {
                     String entity = res.substring(0, res.length() - 2);
@@ -424,43 +288,18 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
             }
         }
 
-        log.info("Applied {} ENTITY policies and {} ENTITY_ATTRIBUTE policies", entityPolicyCount, attrPolicyCount);
-        log.info("Skipped: {} null resource, {} not allow, {} not entity type",
-                skippedNullResource, skippedNotAllow, skippedNotEntityType);
-
-        // Log một số rows đã được update để kiểm tra
-        rows.stream()
-                .filter(r -> T(r.getCanCreate()) || T(r.getCanRead()) || T(r.getCanUpdate()) || T(r.getCanDelete()))
-                .limit(5)
-                .forEach(r -> {
-                    log.info("Updated row: entity={}, create={}, read={}, update={}, delete={}",
-                            r.getEntityName(), r.getCanCreate(), r.getCanRead(), r.getCanUpdate(), r.getCanDelete());
-                });
-
-        // sync allowAll
         rows.forEach(this::syncAllowAll);
-
-        // gán lại vào container
         entityMatrixDc.setItems(rows);
-        log.info("Updated entity matrix with {} rows", rows.size());
 
-        // Kiểm tra lại sau khi set items
-        long rowsWithPermissions = entityMatrixDc.getItems().stream()
-                .filter(r -> T(r.getCanCreate()) || T(r.getCanRead()) || T(r.getCanUpdate()) || T(r.getCanDelete()))
-                .count();
-        log.info("Rows with permissions after update: {}", rowsWithPermissions);
-
-        // preload attr + summary
         preloadAllAttributesFromDbAndFillEntitySummary(policies);
 
-        // chọn entity đầu tiên để hiển thị attr
         EntityMatrixRow first = entityMatrixDc.getItems().stream()
                 .filter(r -> !Strings.isNullOrEmpty(r.getEntityName()))
                 .filter(r -> !"*".equals(r.getEntityName()))
                 .findFirst()
                 .orElse(null);
         if (first != null) {
-            entityMatrixDc.setItem(first); // sẽ trigger onEntityMatrixItemChange -> loadAttributesForEntity
+            entityMatrixDc.setItem(first);
         } else {
             attrMatrixDc.setItems(Collections.emptyList());
             if (attrEntityLabel != null)
@@ -630,138 +469,162 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
     // ============================ UI columns ================================
 
     private void installMatrixColumns() {
-        entityMatrixTable.getColumnByKey("allowAllCol")
-                .setRenderer(new ComponentRenderer<>(row -> {
-                    Checkbox cb = new Checkbox(T(row.getAllowAll()));
-                    cb.addValueChangeListener(e -> {
-                        row.setAllowAll(bool(e.getValue()));
-                        if (T(row.getAllowAll())) {
-                            row.setCanCreate(true);
-                            row.setCanRead(true);
-                            row.setCanUpdate(true);
-                            row.setCanDelete(true);
-                        }
-                        entityMatrixDc.replaceItem(row);
-                    });
-                    return cb;
-                }));
+        // allowAll
+        DataGrid.Column<EntityMatrixRow> allowAllCol = entityMatrixTable.getColumnByKey("allowAllCol");
+        if (allowAllCol != null) {
+            allowAllCol.setRenderer(new ComponentRenderer<>(row -> {
+                Checkbox cb = new Checkbox(T(row.getAllowAll()));
+                cb.addValueChangeListener(e -> {
+                    row.setAllowAll(bool(e.getValue()));
+                    if (T(row.getAllowAll())) {
+                        row.setCanCreate(true);
+                        row.setCanRead(true);
+                        row.setCanUpdate(true);
+                        row.setCanDelete(true);
+                    }
+                    entityMatrixDc.replaceItem(row);
+                });
+                return cb;
+            }));
+        }
 
-        entityMatrixTable.getColumnByKey("createCol")
-                .setRenderer(new ComponentRenderer<>(row -> {
-                    Checkbox cb = new Checkbox(T(row.getCanCreate()));
-                    cb.addValueChangeListener(e -> {
-                        row.setCanCreate(bool(e.getValue()));
-                        entityMatrixDc.replaceItem(row);
-                        syncAllowAll(row);
-                    });
-                    return cb;
-                }));
+        // create
+        DataGrid.Column<EntityMatrixRow> createCol = entityMatrixTable.getColumnByKey("createCol");
+        if (createCol != null) {
+            createCol.setRenderer(new ComponentRenderer<>(row -> {
+                Checkbox cb = new Checkbox(T(row.getCanCreate()));
+                cb.addValueChangeListener(e -> {
+                    row.setCanCreate(bool(e.getValue()));
+                    entityMatrixDc.replaceItem(row);
+                    syncAllowAll(row);
+                });
+                return cb;
+            }));
+        }
 
-        entityMatrixTable.getColumnByKey("readCol")
-                .setRenderer(new ComponentRenderer<>(row -> {
-                    Checkbox cb = new Checkbox(T(row.getCanRead()));
-                    cb.addValueChangeListener(e -> {
-                        row.setCanRead(bool(e.getValue()));
-                        entityMatrixDc.replaceItem(row);
-                        syncAllowAll(row);
-                    });
-                    return cb;
-                }));
+        // read
+        DataGrid.Column<EntityMatrixRow> readCol = entityMatrixTable.getColumnByKey("readCol");
+        if (readCol != null) {
+            readCol.setRenderer(new ComponentRenderer<>(row -> {
+                Checkbox cb = new Checkbox(T(row.getCanRead()));
+                cb.addValueChangeListener(e -> {
+                    row.setCanRead(bool(e.getValue()));
+                    entityMatrixDc.replaceItem(row);
+                    syncAllowAll(row);
+                });
+                return cb;
+            }));
+        }
 
-        entityMatrixTable.getColumnByKey("updateCol")
-                .setRenderer(new ComponentRenderer<>(row -> {
-                    Checkbox cb = new Checkbox(T(row.getCanUpdate()));
-                    cb.addValueChangeListener(e -> {
-                        row.setCanUpdate(bool(e.getValue()));
-                        entityMatrixDc.replaceItem(row);
-                        syncAllowAll(row);
-                    });
-                    return cb;
-                }));
+        // update
+        DataGrid.Column<EntityMatrixRow> updateCol = entityMatrixTable.getColumnByKey("updateCol");
+        if (updateCol != null) {
+            updateCol.setRenderer(new ComponentRenderer<>(row -> {
+                Checkbox cb = new Checkbox(T(row.getCanUpdate()));
+                cb.addValueChangeListener(e -> {
+                    row.setCanUpdate(bool(e.getValue()));
+                    entityMatrixDc.replaceItem(row);
+                    syncAllowAll(row);
+                });
+                return cb;
+            }));
+        }
 
-        entityMatrixTable.getColumnByKey("deleteCol")
-                .setRenderer(new ComponentRenderer<>(row -> {
-                    Checkbox cb = new Checkbox(T(row.getCanDelete()));
-                    cb.addValueChangeListener(e -> {
-                        row.setCanDelete(bool(e.getValue()));
-                        entityMatrixDc.replaceItem(row);
-                        syncAllowAll(row);
-                    });
-                    return cb;
-                }));
+        // delete
+        DataGrid.Column<EntityMatrixRow> deleteCol = entityMatrixTable.getColumnByKey("deleteCol");
+        if (deleteCol != null) {
+            deleteCol.setRenderer(new ComponentRenderer<>(row -> {
+                Checkbox cb = new Checkbox(T(row.getCanDelete()));
+                cb.addValueChangeListener(e -> {
+                    row.setCanDelete(bool(e.getValue()));
+                    entityMatrixDc.replaceItem(row);
+                    syncAllowAll(row);
+                });
+                return cb;
+            }));
+        }
 
-        entityMatrixTable.getColumnByKey("attributesCol")
-                .setRenderer(new ComponentRenderer<>(row -> {
-                    TextField tf = new TextField();
-                    tf.setWidthFull();
-                    tf.setReadOnly(true);
-                    tf.setValue(Objects.toString(displayAttrPattern(row.getAttributes()), ""));
-                    return tf;
-                }));
+        // attributes summary
+        DataGrid.Column<EntityMatrixRow> attrCol = entityMatrixTable.getColumnByKey("attributesCol");
+        if (attrCol != null) {
+            attrCol.setRenderer(new ComponentRenderer<>(row -> {
+                TextField tf = new TextField();
+                tf.setWidthFull();
+                tf.setReadOnly(true);
+                tf.setValue(Objects.toString(displayAttrPattern(row.getAttributes()), ""));
+                return tf;
+            }));
+        }
     }
 
     private void installAttrColumns() {
-        attrMatrixTable.getColumnByKey("viewCol")
-                .setRenderer(new ComponentRenderer<>(row -> {
-                    Checkbox cb = new Checkbox(T(row.getCanView()));
-                    cb.addValueChangeListener(e -> {
-                        row.setCanView(T(e.getValue()));
+        // view
+        DataGrid.Column<AttrMatrixRow> viewCol = attrMatrixTable.getColumnByKey("viewCol");
+        if (viewCol != null) {
+            viewCol.setRenderer(new ComponentRenderer<>(row -> {
+                Checkbox cb = new Checkbox(T(row.getCanView()));
+                cb.addValueChangeListener(e -> {
+                    row.setCanView(T(e.getValue()));
 
-                        if ("*".equals(row.getAttribute())) {
-                            attrMatrixDc.getItems().forEach(r -> {
-                                if (!"*".equals(r.getAttribute()))
-                                    r.setCanView(row.getCanView());
-                            });
-                            attrMatrixDc.setItems(new ArrayList<>(attrMatrixDc.getItems()));
-                        } else {
-                            List<AttrMatrixRow> items = new ArrayList<>(attrMatrixDc.getItems());
-                            for (AttrMatrixRow r2 : items) {
-                                if ("*".equals(r2.getAttribute())) {
-                                    if (T(r2.getCanView()) || T(r2.getCanModify())) {
-                                        r2.setCanView(false);
-                                        r2.setCanModify(false);
-                                    }
-                                    break;
+                    if ("*".equals(row.getAttribute())) {
+                        attrMatrixDc.getItems().forEach(r -> {
+                            if (!"*".equals(r.getAttribute()))
+                                r.setCanView(row.getCanView());
+                        });
+                        attrMatrixDc.setItems(new ArrayList<>(attrMatrixDc.getItems()));
+                    } else {
+                        List<AttrMatrixRow> items = new ArrayList<>(attrMatrixDc.getItems());
+                        for (AttrMatrixRow r2 : items) {
+                            if ("*".equals(r2.getAttribute())) {
+                                if (T(r2.getCanView()) || T(r2.getCanModify())) {
+                                    r2.setCanView(false);
+                                    r2.setCanModify(false);
                                 }
+                                break;
                             }
-                            attrMatrixDc.setItems(items);
                         }
+                        attrMatrixDc.setItems(items);
+                    }
 
-                        updateEntityAttributesSummarySafe(row.getEntityName());
-                    });
-                    return cb;
-                }));
+                    updateEntityAttributesSummarySafe(row.getEntityName());
+                });
+                return cb;
+            }));
+        }
 
-        attrMatrixTable.getColumnByKey("modifyCol")
-                .setRenderer(new ComponentRenderer<>(row -> {
-                    Checkbox cb = new Checkbox(T(row.getCanModify()));
-                    cb.addValueChangeListener(e -> {
-                        row.setCanModify(T(e.getValue()));
+        // modify
+        DataGrid.Column<AttrMatrixRow> modifyCol = attrMatrixTable.getColumnByKey("modifyCol");
+        if (modifyCol != null) {
+            modifyCol.setRenderer(new ComponentRenderer<>(row -> {
+                Checkbox cb = new Checkbox(T(row.getCanModify()));
+                cb.addValueChangeListener(e -> {
+                    row.setCanModify(T(e.getValue()));
 
-                        if ("*".equals(row.getAttribute())) {
-                            attrMatrixDc.getItems().forEach(r -> {
-                                if (!"*".equals(r.getAttribute()))
-                                    r.setCanModify(row.getCanModify());
-                            });
-                            attrMatrixDc.setItems(new ArrayList<>(attrMatrixDc.getItems()));
-                        } else {
-                            List<AttrMatrixRow> items = new ArrayList<>(attrMatrixDc.getItems());
-                            for (AttrMatrixRow r2 : items) {
-                                if ("*".equals(r2.getAttribute())) {
-                                    if (T(r2.getCanView()) || T(r2.getCanModify())) {
-                                        r2.setCanView(false);
-                                        r2.setCanModify(false);
-                                    }
-                                    break;
+                    if ("*".equals(row.getAttribute())) {
+                        attrMatrixDc.getItems().forEach(r -> {
+                            if (!"*".equals(r.getAttribute()))
+                                r.setCanModify(row.getCanModify());
+                        });
+                        attrMatrixDc.setItems(new ArrayList<>(attrMatrixDc.getItems()));
+                    } else {
+                        List<AttrMatrixRow> items = new ArrayList<>(attrMatrixDc.getItems());
+                        for (AttrMatrixRow r2 : items) {
+                            if ("*".equals(r2.getAttribute())) {
+                                if (T(r2.getCanView()) || T(r2.getCanModify())) {
+                                    r2.setCanView(false);
+                                    r2.setCanModify(false);
                                 }
+                                break;
                             }
-                            attrMatrixDc.setItems(items);
                         }
+                        attrMatrixDc.setItems(items);
+                    }
 
-                        updateEntityAttributesSummarySafe(row.getEntityName());
-                    });
-                    return cb;
-                }));
+                    updateEntityAttributesSummarySafe(row.getEntityName());
+                });
+                return cb;
+            }));
+        }
     }
 
     // =============================== Events =================================
@@ -784,9 +647,6 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
 
     // ======================= Utils & helpers ================================
 
-    /**
-     * Kiểm tra xem policy type có phải là ENTITY không (hỗ trợ cả enum và string, chữ thường/chữ hoa)
-     */
     private boolean isEntityType(Object type) {
         if (type == null) return false;
         if (type == ResourcePolicyType.ENTITY) return true;
@@ -794,9 +654,6 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         return "entity".equals(typeStr);
     }
 
-    /**
-     * Kiểm tra xem policy type có phải là ENTITY_ATTRIBUTE không (hỗ trợ cả enum và string, chữ thường/chữ hoa)
-     */
     private boolean isEntityAttributeType(Object type) {
         if (type == null) return false;
         if (type == ResourcePolicyType.ENTITY_ATTRIBUTE) return true;

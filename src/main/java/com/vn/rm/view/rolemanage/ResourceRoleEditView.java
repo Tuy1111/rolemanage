@@ -209,12 +209,13 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
 
             if (userInterfaceFragment.isAllowAllViewsChecked()) {
                 ResourcePolicyModel all = metadata.create(ResourcePolicyModel.class);
-                all.setType("VIEW");        // hoặc ResourcePolicyType.SPECIFIC nếu bạn dùng enum
+                all.setType("VIEW");      // dùng string, không dùng enum VIEW
                 all.setResource("*");
-                all.setAction("view");
-                all.setEffect("ALLOW");
+                all.setAction("view");    // action không null
+                all.setEffect("ALLOW");   // dùng string cho effect
                 allPolicies.add(all);
             }
+
         }
 
         return allPolicies;
@@ -222,6 +223,7 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
 
     /**
      * Đảm bảo role này có specific policy cho 'ui.loginToUi' để user login được vào UI.
+     * LƯU Ý: cột ACTION_ trong DB là NOT NULL -> luôn set action khác null.
      */
     private void ensureLoginToUiPolicy(ResourceRoleModel model) {
         List<ResourcePolicyModel> policies = new ArrayList<>(
@@ -238,7 +240,7 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
             ResourcePolicyModel p = metadata.create(ResourcePolicyModel.class);
             p.setType(ResourcePolicyType.SPECIFIC);
             p.setResource("ui.loginToUi");
-            p.setAction(null); // nếu bạn dùng action khác thì set ở đây
+            p.setAction("allow");
             p.setEffect(ResourcePolicyEffect.ALLOW);
             p.setPolicyGroup("specific");
             policies.add(p);
