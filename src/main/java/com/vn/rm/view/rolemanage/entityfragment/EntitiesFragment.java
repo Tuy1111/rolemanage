@@ -1,6 +1,7 @@
 package com.vn.rm.view.rolemanage.entityfragment;
 
 import com.google.common.base.Strings;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.html.Span;
@@ -204,7 +205,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
 
         if (!entityRows.isEmpty()) {
             boolean allCreate = entityRows.stream().allMatch(r -> T(r.getCanCreate()));
-            boolean allRead   = entityRows.stream().allMatch(r -> T(r.getCanRead()));
+            boolean allRead = entityRows.stream().allMatch(r -> T(r.getCanRead()));
             boolean allUpdate = entityRows.stream().allMatch(r -> T(r.getCanUpdate()));
             boolean allDelete = entityRows.stream().allMatch(r -> T(r.getCanDelete()));
 
@@ -273,12 +274,12 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         // thêm 1 header row nằm dưới hàng tiêu đề mặc định
         HeaderRow row = entityMatrixTable.appendHeaderRow();
 
-        DataGrid.Column<EntityMatrixRow> entityCol   = entityMatrixTable.getColumns().get(0);
+        DataGrid.Column<EntityMatrixRow> entityCol = entityMatrixTable.getColumns().get(0);
         DataGrid.Column<EntityMatrixRow> allowAllCol = entityMatrixTable.getColumnByKey("allowAllCol");
-        DataGrid.Column<EntityMatrixRow> createCol   = entityMatrixTable.getColumnByKey("createCol");
-        DataGrid.Column<EntityMatrixRow> readCol     = entityMatrixTable.getColumnByKey("readCol");
-        DataGrid.Column<EntityMatrixRow> updateCol   = entityMatrixTable.getColumnByKey("updateCol");
-        DataGrid.Column<EntityMatrixRow> deleteCol   = entityMatrixTable.getColumnByKey("deleteCol");
+        DataGrid.Column<EntityMatrixRow> createCol = entityMatrixTable.getColumnByKey("createCol");
+        DataGrid.Column<EntityMatrixRow> readCol = entityMatrixTable.getColumnByKey("readCol");
+        DataGrid.Column<EntityMatrixRow> updateCol = entityMatrixTable.getColumnByKey("updateCol");
+        DataGrid.Column<EntityMatrixRow> deleteCol = entityMatrixTable.getColumnByKey("deleteCol");
 
         // text "All entities (*)" dưới cột Entity
         if (entityCol != null) {
@@ -382,6 +383,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
     private void refreshMatrixFromPolicies() {
         List<EntityMatrixRow> rows = new ArrayList<>(entityMatrixDc.getItems());
 
+        // reset hết flags
         rows.forEach(r -> {
             r.setAllowAll(false);
             r.setCanCreate(false);
@@ -394,6 +396,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         Collection<ResourcePolicyModel> policies =
                 Optional.ofNullable(resourcePoliciesDc.getItems()).orElseGet(List::of);
 
+        // map entityName -> row của nó (bỏ "*")
         Map<String, EntityMatrixRow> rowByEntity = rows.stream()
                 .filter(r -> !Strings.isNullOrEmpty(r.getEntityName()))
                 .filter(r -> !"*".equals(r.getEntityName()))
@@ -403,6 +406,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
             if (p.getResource() == null)
                 continue;
 
+            // chỉ lấy policy effect = ALLOW
             Object effect = p.getEffect();
             boolean allow;
             if (effect == null) {
@@ -425,19 +429,18 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
 
             if (isEntity) {
                 String resource = p.getResource();
-                EntityMatrixRow row = rowByEntity.get(resource);
-                if (row == null)
-                    continue;
-
                 String action = p.getAction();
-                if (EntityPolicyAction.CREATE.getId().equals(action)) {
-                    row.setCanCreate(true);
-                } else if (EntityPolicyAction.READ.getId().equals(action)) {
-                    row.setCanRead(true);
-                } else if (EntityPolicyAction.UPDATE.getId().equals(action)) {
-                    row.setCanUpdate(true);
-                } else if (EntityPolicyAction.DELETE.getId().equals(action)) {
-                    row.setCanDelete(true);
+
+                // ==== NEW: wildcard "*" cho tất cả entity ====
+                if ("*".equals(resource)) {
+                    for (EntityMatrixRow row : rows) {
+                        applyEntityActionToRow(row, action);
+                    }
+                } else {
+                    EntityMatrixRow row = rowByEntity.get(resource);
+                    if (row == null)
+                        continue;
+                    applyEntityActionToRow(row, action);
                 }
 
             } else if (isEntityAttr) {
@@ -453,15 +456,31 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
             }
         }
 
+        // đồng bộ AllowAll theo CRUD
         rows.forEach(this::syncAllowAll);
         entityMatrixDc.setItems(rows);
         updateHeaderAllowAllFromRows();
 
+        // load sẵn attr + summary cho từng entity
         preloadAllAttributesFromDbAndFillEntitySummary(policies);
 
+        // reset bảng attributes bên phải
         attrMatrixDc.setItems(Collections.emptyList());
         if (attrEntityLabel != null) {
             attrEntityLabel.setText("");
+        }
+    }
+
+    // helper nhỏ cho đỡ lặp code
+    private void applyEntityActionToRow(EntityMatrixRow row, String action) {
+        if (EntityPolicyAction.CREATE.getId().equals(action)) {
+            row.setCanCreate(true);
+        } else if (EntityPolicyAction.READ.getId().equals(action)) {
+            row.setCanRead(true);
+        } else if (EntityPolicyAction.UPDATE.getId().equals(action)) {
+            row.setCanUpdate(true);
+        } else if (EntityPolicyAction.DELETE.getId().equals(action)) {
+            row.setCanDelete(true);
         }
     }
 
@@ -482,21 +501,21 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
             if (items == null || items.isEmpty()) {
                 // không có row nào -> set false hết
                 if (headerAllowAllCb != null) headerAllowAllCb.setValue(false);
-                if (headerCreateCb  != null) headerCreateCb.setValue(false);
-                if (headerReadCb    != null) headerReadCb.setValue(false);
-                if (headerUpdateCb  != null) headerUpdateCb.setValue(false);
-                if (headerDeleteCb  != null) headerDeleteCb.setValue(false);
+                if (headerCreateCb != null) headerCreateCb.setValue(false);
+                if (headerReadCb != null) headerReadCb.setValue(false);
+                if (headerUpdateCb != null) headerUpdateCb.setValue(false);
+                if (headerDeleteCb != null) headerDeleteCb.setValue(false);
                 return;
             }
 
             boolean allCreate = items.stream().allMatch(r -> T(r.getCanCreate()));
-            boolean allRead   = items.stream().allMatch(r -> T(r.getCanRead()));
+            boolean allRead = items.stream().allMatch(r -> T(r.getCanRead()));
             boolean allUpdate = items.stream().allMatch(r -> T(r.getCanUpdate()));
             boolean allDelete = items.stream().allMatch(r -> T(r.getCanDelete()));
 
             // header từng cột
             if (headerCreateCb != null) headerCreateCb.setValue(allCreate);
-            if (headerReadCb   != null) headerReadCb.setValue(allRead);
+            if (headerReadCb != null) headerReadCb.setValue(allRead);
             if (headerUpdateCb != null) headerUpdateCb.setValue(allUpdate);
             if (headerDeleteCb != null) headerDeleteCb.setValue(allDelete);
 
@@ -532,10 +551,10 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                 return;
             }
 
-            boolean allView   = items.stream().allMatch(r -> T(r.getView()));
+            boolean allView = items.stream().allMatch(r -> T(r.getView()));
             boolean allModify = items.stream().allMatch(r -> T(r.getModify()));
 
-            if (headerAttrViewCb != null)   headerAttrViewCb.setValue(allView);
+            if (headerAttrViewCb != null) headerAttrViewCb.setValue(allView);
             if (headerAttrModifyCb != null) headerAttrModifyCb.setValue(allModify);
         } finally {
             updatingAttrHeaderFromRows = false;
@@ -561,8 +580,8 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
     private void initAttrHeader() {
         HeaderRow row = attrMatrixTable.appendHeaderRow();
 
-        DataGrid.Column<AttributeResourceModel> attrCol   = attrMatrixTable.getColumnByKey("name");
-        DataGrid.Column<AttributeResourceModel> viewCol   = attrMatrixTable.getColumnByKey("viewCol");
+        DataGrid.Column<AttributeResourceModel> attrCol = attrMatrixTable.getColumnByKey("name");
+        DataGrid.Column<AttributeResourceModel> viewCol = attrMatrixTable.getColumnByKey("viewCol");
         DataGrid.Column<AttributeResourceModel> modifyCol = attrMatrixTable.getColumnByKey("modifyCol");
 
         // text "All attributes (*)" dưới cột Attribute
@@ -701,11 +720,10 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
     private void applyAttrPolicies(List<AttributeResourceModel> rows,
                                    String entityName,
                                    Collection<ResourcePolicyModel> policies) {
-
         Map<String, List<ResourcePolicyModel>> byRes = policies.stream()
                 .filter(p -> isEntityAttributeType(p.getType()))
                 .filter(p -> p.getResource() != null && p.getResource().startsWith(entityName + "."))
-                .filter(p -> p.getEffect() == null || p.getEffect() == ResourcePolicyEffect.ALLOW)
+//                .filter(p -> p.getEffect() == null || p.getEffect() == ResourcePolicyEffect.ALLOW)
                 .collect(Collectors.groupingBy(ResourcePolicyModel::getResource));
 
         // wildcard entity.*
@@ -869,15 +887,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
 
         // ===== ATTRIBUTES SUMMARY =====
         DataGrid.Column<EntityMatrixRow> attrCol = entityMatrixTable.getColumnByKey("attributesCol");
-        if (attrCol != null) {
-            attrCol.setRenderer(new ComponentRenderer<>(row -> {
-                TextField tf = new TextField();
-                tf.setWidthFull();
-                tf.setReadOnly(true);
-                tf.setValue(Objects.toString(displayAttrPattern(row.getAttributes()), ""));
-                return tf;
-            }));
-        }
+
     }
 
 
@@ -994,11 +1004,22 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
     }
 
     private boolean isEntityAttributeType(Object type) {
-        if (type == null) return false;
-        if (type == ResourcePolicyType.ENTITY_ATTRIBUTE) return true;
-        String typeStr = type.toString().toLowerCase();
-        return "entityattribute".equals(typeStr) || "entity_attribute".equals(typeStr);
+        if (type == null) {
+            return false;
+        }
+
+        // enum
+        if (type == ResourcePolicyType.ENTITY_ATTRIBUTE) {
+            return true;
+        }
+
+        String typeStr = type.toString()
+                .replace("_", "")
+                .toLowerCase();
+
+        return "entity".equalsIgnoreCase(typeStr) || "entityAttribute".equalsIgnoreCase(typeStr);
     }
+
 
     private void syncAllowAll(EntityMatrixRow r) {
         boolean all = T(r.getCanCreate()) && T(r.getCanRead())
@@ -1042,9 +1063,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         boolean fullModify = !attrs.isEmpty() && attrs.stream().allMatch(a -> T(a.getModify()));
 
         String pattern;
-        if (fullView && fullModify) {
-            pattern = "*,*";
-        } else if (fullView || fullModify) {
+        if (fullView || fullModify) {
             pattern = "*";
         } else {
             long selected = attrs.stream()
@@ -1126,7 +1145,11 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         p.setResource(entityName);
         p.setAction(actionId);
         p.setEffect(ResourcePolicyEffect.ALLOW);
-        p.setPolicyGroup("entity");
+        if (entityName.endsWith("*")) {
+            p.setPolicyGroup("");
+        } else {
+            p.setPolicyGroup(entityName);
+        }
         return p;
     }
 
@@ -1139,7 +1162,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         p.setResource(resource);
         p.setAction(actionId);
         p.setEffect(ResourcePolicyEffect.ALLOW);
-        p.setPolicyGroup("entity-attrs");
+        p.setPolicyGroup(entityName);
         return p;
     }
 

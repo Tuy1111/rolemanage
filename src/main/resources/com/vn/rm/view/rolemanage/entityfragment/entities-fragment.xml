@@ -27,7 +27,7 @@
                             <column key="readCol" header="Read"/>
                             <column key="updateCol" header="Update"/>
                             <column key="deleteCol" header="Delete"/>
-                            <column key="attributesCol" header="Attributes" width="160px"/>
+                            <column property="attributes" header="Attributes" width="160px"/>
                         </columns>
                     </dataGrid>
                 </vbox>

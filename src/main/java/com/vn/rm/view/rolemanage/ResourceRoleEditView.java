@@ -171,7 +171,7 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
         List<ResourcePolicyModel> allPolicies = collectAllPoliciesFromFragments(model);
         model.setResourcePolicies(allPolicies);
 
-        // Đảm bảo có quyền login UI
+//        // Đảm bảo có quyền login UI
         ensureLoginToUiPolicy(model);
 
         persistRoleToDb(model);
@@ -188,7 +188,7 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
         List<ResourcePolicyModel> allPolicies = collectAllPoliciesFromFragments(model);
         model.setResourcePolicies(allPolicies);
 
-        // Đảm bảo có quyền login UI
+//        // Đảm bảo có quyền login UI
         ensureLoginToUiPolicy(model);
     }
 
@@ -221,10 +221,10 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
         return allPolicies;
     }
 
-    /**
-     * Đảm bảo role này có specific policy cho 'ui.loginToUi' để user login được vào UI.
-     * LƯU Ý: cột ACTION_ trong DB là NOT NULL -> luôn set action khác null.
-     */
+//    /**
+//     * Đảm bảo role này có specific policy cho 'ui.loginToUi' để user login được vào UI.
+//     * LƯU Ý: cột ACTION_ trong DB là NOT NULL -> luôn set action khác null.
+//     */
     private void ensureLoginToUiPolicy(ResourceRoleModel model) {
         List<ResourcePolicyModel> policies = new ArrayList<>(
                 Optional.ofNullable(model.getResourcePolicies())
