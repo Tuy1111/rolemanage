@@ -171,9 +171,6 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
         List<ResourcePolicyModel> allPolicies = collectAllPoliciesFromFragments(model);
         model.setResourcePolicies(allPolicies);
 
-//        // Đảm bảo có quyền login UI
-        ensureLoginToUiPolicy(model);
-
         persistRoleToDb(model);
         close(StandardOutcome.SAVE);
     }
@@ -188,8 +185,7 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
         List<ResourcePolicyModel> allPolicies = collectAllPoliciesFromFragments(model);
         model.setResourcePolicies(allPolicies);
 
-//        // Đảm bảo có quyền login UI
-        ensureLoginToUiPolicy(model);
+
     }
 
     /**
@@ -220,35 +216,6 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
 
         return allPolicies;
     }
-
-//    /**
-//     * Đảm bảo role này có specific policy cho 'ui.loginToUi' để user login được vào UI.
-//     * LƯU Ý: cột ACTION_ trong DB là NOT NULL -> luôn set action khác null.
-//     */
-    private void ensureLoginToUiPolicy(ResourceRoleModel model) {
-        List<ResourcePolicyModel> policies = new ArrayList<>(
-                Optional.ofNullable(model.getResourcePolicies())
-                        .orElseGet(Collections::emptyList)
-        );
-
-        boolean hasLoginToUi = policies.stream().anyMatch(p ->
-                p.getType() == ResourcePolicyType.SPECIFIC
-                        && "ui.loginToUi".equals(p.getResource())
-                        && (p.getEffect() == null || p.getEffect() == ResourcePolicyEffect.ALLOW));
-
-        if (!hasLoginToUi) {
-            ResourcePolicyModel p = metadata.create(ResourcePolicyModel.class);
-            p.setType(ResourcePolicyType.SPECIFIC);
-            p.setResource("ui.loginToUi");
-            p.setAction("allow");
-            p.setEffect(ResourcePolicyEffect.ALLOW);
-            p.setPolicyGroup("specific");
-            policies.add(p);
-        }
-
-        model.setResourcePolicies(policies);
-    }
-
 
     // ======================= Mapping & persistence =======================
 
