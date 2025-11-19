@@ -8,42 +8,37 @@ import java.util.List;
 @JmixEntity(name = "rm_PolicyGroupNode")
 public class PolicyGroupNode {
 
-    @InstanceName
     private String name;
+    private Boolean group;
+
+    private String type;      // VIEW / MENU
+    private String resource;  // viewId or menuId
+    private String action;    // view / menu
+    private String effect;    // ALLOW / DENY
+    private String meta;      // (View), (Menu), (View, Menu)
+
+    private Boolean allow = false;
+    private Boolean deny = false;
 
     private PolicyGroupNode parent;
     private List<PolicyGroupNode> children = new ArrayList<>();
 
-    private String resource;
-    private String action;
-    private String effect;
-    private String type; // VIEW / MENU
-
-    // ✅ Dùng wrapper Boolean (FlowUI không thích primitive boolean)
-    private Boolean group = Boolean.FALSE;
-    private Boolean allow = Boolean.FALSE;
-    private Boolean deny = Boolean.FALSE;
-
-    public PolicyGroupNode() {
-    }
-
-    public PolicyGroupNode(String name, Boolean group) {
+    public PolicyGroupNode(String name, boolean group) {
         this.name = name;
         this.group = group;
     }
 
-    // ==========================
-    // ✅ Getter / Setter chuẩn hóa
-    // ==========================
+
+    // getters - setters
 
     public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setName(String name){ this.name = name; }
 
-    public PolicyGroupNode getParent() { return parent; }
-    public void setParent(PolicyGroupNode parent) { this.parent = parent; }
+    public Boolean getGroup() { return group; }
+    public void setGroup(Boolean group) { this.group = group; }
 
-    public List<PolicyGroupNode> getChildren() { return children; }
-    public void setChildren(List<PolicyGroupNode> children) { this.children = children; }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
 
     public String getResource() { return resource; }
     public void setResource(String resource) { this.resource = resource; }
@@ -54,29 +49,18 @@ public class PolicyGroupNode {
     public String getEffect() { return effect; }
     public void setEffect(String effect) { this.effect = effect; }
 
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
-
-    public Boolean getGroup() { return group != null && group; }
-    public void setGroup(Boolean group) { this.group = group; }
-
-    public Boolean getAllow() { return allow != null && allow; }
+    public Boolean getAllow() { return allow; }
     public void setAllow(Boolean allow) { this.allow = allow; }
 
-    public Boolean getDeny() { return deny != null && deny; }
+    public Boolean getDeny() { return deny; }
     public void setDeny(Boolean deny) { this.deny = deny; }
 
-    // ==========================
-    // ✅ Tiện ích (optional)
-    // ==========================
+    public String getMeta() { return meta; }
+    public void setMeta(String meta) { this.meta = meta; }
 
-    public boolean isLeaf() {
-        return children == null || children.isEmpty();
-    }
+    public PolicyGroupNode getParent() { return parent; }
+    public void setParent(PolicyGroupNode parent) { this.parent = parent; }
 
-    @Override
-    public String toString() {
-        return String.format("PolicyGroupNode{name='%s', type='%s', resource='%s', allow=%s, deny=%s}",
-                name, type, resource, allow, deny);
-    }
+    public List<PolicyGroupNode> getChildren() { return children; }
+    public void setChildren(List<PolicyGroupNode> children) { this.children = children; }
 }
