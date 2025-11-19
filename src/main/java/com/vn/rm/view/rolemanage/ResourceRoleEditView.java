@@ -41,6 +41,7 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
     private io.jmix.flowui.component.textarea.JmixTextArea descriptionField;
 
 
+
     @ViewComponent
     private JmixCheckboxGroup<String> scopesField;
     @ViewComponent
@@ -75,20 +76,16 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
 
     @Subscribe
     public void onInitEntity(InitEntityEvent<ResourceRoleModel> event) {
-        // entity MỚI
         ResourceRoleModel model = event.getEntity();
 
         model.setSource(RoleSourceType.DATABASE);
         model.setResourcePolicies(new ArrayList<>());
 
-        // Cho phép sửa code khi tạo mới
         nameField.setReadOnly(false);
         codeField.setReadOnly(false);
         descriptionField.setReadOnly(false);
-
-
+        scopesField.setReadOnly(false);
     }
-
 
     @Override
     protected String getRouteParamName() {
@@ -116,7 +113,6 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
             entitiesFragment.initPolicies(policies);
         }
 
-        // Khởi tạo tab User Interface (tree view / menu)
         if (userInterfaceFragment != null) {
             userInterfaceFragment.initUi(model);
         }
@@ -165,14 +161,8 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
             }
         }
 
-        // Child roles
-        childRolesDc.setItems(loadChildRoleModels(model));
-
-        // Merge vào DataContext, gán vào container
         ResourceRoleModel merged = dataContext.merge(model);
         roleModelDc.setItem(merged);
-
-        // Resource policies cho view (nếu cần hiển thị ở đâu đó)
         resourcePoliciesDc.setItems(
                 Optional.ofNullable(merged.getResourcePolicies())
                         .map(ArrayList::new)
@@ -200,38 +190,23 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
     }
 
 
-//    @Subscribe(target = Target.DATA_CONTEXT)
-//    public void onBeforeSave(DataContext.PreSaveEvent event) {
-//        ResourceRoleModel model = roleModelDc.getItem();
-//        if (model == null) {
-//            return;
-//        }
-//
-//        List<ResourcePolicyModel> allPolicies = collectAllPoliciesFromFragments(model);
-//        model.setResourcePolicies(allPolicies);
-//
-//
-//    }
-
 
     private List<ResourcePolicyModel> collectAllPoliciesFromFragments(ResourceRoleModel model) {
         List<ResourcePolicyModel> allPolicies = new ArrayList<>();
 
-        // ENTITY + ATTRIBUTE
         if (entitiesFragment != null) {
             allPolicies.addAll(entitiesFragment.buildPoliciesFromMatrix());
         }
 
-        // VIEW + MENU
         if (userInterfaceFragment != null) {
             allPolicies.addAll(userInterfaceFragment.collectPoliciesFromTree());
 
             if (userInterfaceFragment.isAllowAllViewsChecked()) {
                 ResourcePolicyModel all = metadata.create(ResourcePolicyModel.class);
-                all.setType("VIEW");      // dùng string, không dùng enum VIEW
+                all.setType("VIEW");
                 all.setResource("*");
-                all.setAction("view");    // action không null
-                all.setEffect("ALLOW");   // dùng string cho effect
+                all.setAction("view");
+                all.setEffect("ALLOW");
                 allPolicies.add(all);
             }
 
@@ -336,15 +311,4 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
                 Objects.toString(group, ""));
     }
 
-    private List<ResourceRoleModel> loadChildRoleModels(ResourceRoleModel edited) {
-        if (edited.getChildRoles() == null || edited.getChildRoles().isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        return edited.getChildRoles().stream()
-                .map(roleRepository::findRoleByCode)
-                .filter(Objects::nonNull)
-                .map(roleModelConverter::createResourceRoleModel)
-                .collect(Collectors.toList());
-    }
 }
