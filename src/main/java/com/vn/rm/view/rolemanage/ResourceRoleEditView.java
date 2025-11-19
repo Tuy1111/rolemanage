@@ -71,14 +71,9 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
 
     @Subscribe
     public void onInit(InitEvent event) {
-        // scopes cho role
         scopesField.setItems(Arrays.asList(SecurityScope.UI, SecurityScope.API));
     }
 
-    /**
-     * BeforeShow: lúc này model đã được load (initExistingEntity đã chạy),
-     * fragment cũng đã được khởi tạo, nên ta đẩy policies vào fragment.
-     */
     @Subscribe
     public void onBeforeShow(BeforeShowEvent event) {
         ResourceRoleModel model = roleModelDc.getItemOrNull();

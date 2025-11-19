@@ -32,13 +32,6 @@ public interface FullAccessRole {
     void fullAccess();
 
 
-    @EntityAttributePolicy(
-            entityName = "*",
-            attributes = "*",
-            action = EntityAttributePolicyAction.MODIFY
-    )
-    void allAttributesAll();
-
     @EntityPolicy(entityClass = AbstractSingleFilterCondition.class, actions = EntityPolicyAction.ALL)
     @EntityAttributePolicy(entityClass = AbstractSingleFilterCondition.class, attributes = "*", action = EntityAttributePolicyAction.VIEW)
     void abstractSingleFilterCondition();
