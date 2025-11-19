@@ -16,6 +16,8 @@ import io.jmix.securityflowui.view.resourcerole.ResourceRoleModelDetailView;
 import io.jmix.securityflowui.view.resourcerole.ResourceRoleModelListView;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import static io.jmix.flowui.view.StandardDetailView.NEW_ENTITY_ID;
+
 @Route(value = "sec/extresourcerolemodels", layout = DefaultMainViewParent.class)
 @ViewController(id = "ext_sec_ResourceRoleModel.list")
 @ViewDescriptor(path = "ext-resource-role-model-list-view.xml")
@@ -52,9 +54,11 @@ public class ExtResourceRoleModelListView extends ResourceRoleModelListView {
 
     @Subscribe("roleModelsTable.createCustomRole")
     public void onRoleModelsTableCreateCustomRole(final ActionPerformedEvent event) {
-        viewNavigators.view(this,ResourceRoleEditView.class)
-                  .navigate();
+        viewNavigators.view(this, ResourceRoleEditView.class)
+                .withRouteParameters(new RouteParameters("code", NEW_ENTITY_ID))
+                .navigate();
     }
+
 
     @Subscribe("roleModelsTable.editCustomRole")
     public void onRoleModelsTableEditCustomRole(ActionPerformedEvent e) {

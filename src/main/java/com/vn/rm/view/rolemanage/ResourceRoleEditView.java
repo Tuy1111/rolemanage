@@ -31,6 +31,15 @@ import java.util.stream.Collectors;
 public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> {
 
     // ============================= UI components =============================
+    @ViewComponent
+    private io.jmix.flowui.component.textfield.TypedTextField<String> codeField;
+
+    @ViewComponent
+    private io.jmix.flowui.component.textfield.TypedTextField<String> nameField;
+
+    @ViewComponent
+    private io.jmix.flowui.component.textarea.JmixTextArea descriptionField;
+
 
     @ViewComponent
     private JmixCheckboxGroup<String> scopesField;
@@ -63,6 +72,23 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
     private DataManager dataManager;
 
     // ============================== Lifecycle ================================
+
+    @Subscribe
+    public void onInitEntity(InitEntityEvent<ResourceRoleModel> event) {
+        // entity MỚI
+        ResourceRoleModel model = event.getEntity();
+
+        model.setSource(RoleSourceType.DATABASE);
+        model.setResourcePolicies(new ArrayList<>());
+
+        // Cho phép sửa code khi tạo mới
+        nameField.setReadOnly(false);
+        codeField.setReadOnly(false);
+        descriptionField.setReadOnly(false);
+
+
+    }
+
 
     @Override
     protected String getRouteParamName() {
@@ -163,29 +189,31 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
             return;
         }
 
+        // Gom hết policies từ 2 fragment
         List<ResourcePolicyModel> allPolicies = collectAllPoliciesFromFragments(model);
         model.setResourcePolicies(allPolicies);
 
+        // Lưu xuống DB - vừa dùng cho tạo mới, vừa dùng cho sửa
         persistRoleToDb(model);
+
         close(StandardOutcome.SAVE);
     }
 
-    @Subscribe(target = Target.DATA_CONTEXT)
-    public void onBeforeSave(DataContext.PreSaveEvent event) {
-        ResourceRoleModel model = roleModelDc.getItem();
-        if (model == null) {
-            return;
-        }
 
-        List<ResourcePolicyModel> allPolicies = collectAllPoliciesFromFragments(model);
-        model.setResourcePolicies(allPolicies);
+//    @Subscribe(target = Target.DATA_CONTEXT)
+//    public void onBeforeSave(DataContext.PreSaveEvent event) {
+//        ResourceRoleModel model = roleModelDc.getItem();
+//        if (model == null) {
+//            return;
+//        }
+//
+//        List<ResourcePolicyModel> allPolicies = collectAllPoliciesFromFragments(model);
+//        model.setResourcePolicies(allPolicies);
+//
+//
+//    }
 
 
-    }
-
-    /**
-     * Gom policy từ 2 fragment: EntitiesFragment + UserInterfaceFragment
-     */
     private List<ResourcePolicyModel> collectAllPoliciesFromFragments(ResourceRoleModel model) {
         List<ResourcePolicyModel> allPolicies = new ArrayList<>();
 
