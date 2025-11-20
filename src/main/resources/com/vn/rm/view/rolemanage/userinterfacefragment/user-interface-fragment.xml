@@ -11,7 +11,7 @@
     <content>
         <vbox id="policyBox" padding="true" spacing="true">
             <hbox spacing="true" alignItems="CENTER">
-                <checkbox id="showAssignedOnly" label="Show Assigned Only"/>
+<!--                <checkbox id="showAssignedOnly" label="Show Assigned Only"/>-->
                 <checkbox id="allowAllViews" label="Allow all views"/>
             </hbox>
 
