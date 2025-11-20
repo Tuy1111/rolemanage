@@ -18,7 +18,6 @@ import io.jmix.securityflowui.view.resourcepolicy.AttributeResourceModel;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @FragmentDescriptor("entities-fragment.xml")
 public class EntitiesFragment extends Fragment<VerticalLayout> {
@@ -81,6 +80,24 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         installAttrColumns();
         initEntityHeader();
         initAttrHeader();
+    }
+
+    // =============================== Events =================================
+
+    @Subscribe(id = "entityMatrixDc", target = Target.DATA_CONTAINER)
+    public void onEntityMatrixItemChange(CollectionContainer.ItemChangeEvent<EntityMatrixRow> e) {
+        EntityMatrixRow row = e.getItem();
+        if (row == null) {
+            if (attrEntityLabel != null)
+                attrEntityLabel.setText("");
+            attrMatrixDc.setItems(Collections.emptyList());
+            return;
+        }
+
+        String cap = Optional.ofNullable(row.getEntityCaption()).orElse(row.getEntityName());
+        if (attrEntityLabel != null)
+            attrEntityLabel.setText("Entity: " + cap + " (" + row.getEntityName() + ")");
+        loadAttributesForEntity(row.getEntityName());
     }
 
     // ========================================================================
@@ -154,18 +171,26 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                     return;
                 }
                 boolean v = Boolean.TRUE.equals(e.getValue());
-                for (EntityMatrixRow r : entityMatrixDc.getItems()) {
+
+                // lấy snapshot
+                List<EntityMatrixRow> items = new ArrayList<>(entityMatrixDc.getItems());
+                for (EntityMatrixRow r : items) {
                     r.setAllowAll(v);
                     r.setCanCreate(v);
                     r.setCanRead(v);
                     r.setCanUpdate(v);
                     r.setCanDelete(v);
-                    entityMatrixDc.replaceItem(r);
+                }
+                // set lại 1 lần, KHÔNG dùng replaceItem trong for-each
+                entityMatrixDc.setItems(items);
+                if (!v) {
+                    resetAllAttributesFlags();
                 }
                 updateHeaderAllowAllFromRows();
             });
             row.getCell(allowAllCol).setComponent(headerAllowAllCb);
         }
+
 
         // ===== HEADER: CREATE =====
         if (createCol != null) {
@@ -174,15 +199,19 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                 if (updatingHeaderFromRows) return;
 
                 boolean v = Boolean.TRUE.equals(e.getValue());
-                for (EntityMatrixRow r : entityMatrixDc.getItems()) {
+
+                List<EntityMatrixRow> items = new ArrayList<>(entityMatrixDc.getItems());
+                for (EntityMatrixRow r : items) {
                     r.setCanCreate(v);
                     syncAllowAll(r);
-                    entityMatrixDc.replaceItem(r);
                 }
+                entityMatrixDc.setItems(items);
+
                 updateHeaderAllowAllFromRows();
             });
             row.getCell(createCol).setComponent(headerCreateCb);
         }
+
 
         // ===== HEADER: READ =====
         if (readCol != null) {
@@ -191,15 +220,19 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                 if (updatingHeaderFromRows) return;
 
                 boolean v = Boolean.TRUE.equals(e.getValue());
-                for (EntityMatrixRow r : entityMatrixDc.getItems()) {
+
+                List<EntityMatrixRow> items = new ArrayList<>(entityMatrixDc.getItems());
+                for (EntityMatrixRow r : items) {
                     r.setCanRead(v);
                     syncAllowAll(r);
-                    entityMatrixDc.replaceItem(r);
                 }
+                entityMatrixDc.setItems(items);
+
                 updateHeaderAllowAllFromRows();
             });
             row.getCell(readCol).setComponent(headerReadCb);
         }
+
 
         // ===== HEADER: UPDATE =====
         if (updateCol != null) {
@@ -208,15 +241,19 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                 if (updatingHeaderFromRows) return;
 
                 boolean v = Boolean.TRUE.equals(e.getValue());
-                for (EntityMatrixRow r : entityMatrixDc.getItems()) {
+
+                List<EntityMatrixRow> items = new ArrayList<>(entityMatrixDc.getItems());
+                for (EntityMatrixRow r : items) {
                     r.setCanUpdate(v);
                     syncAllowAll(r);
-                    entityMatrixDc.replaceItem(r);
                 }
+                entityMatrixDc.setItems(items);
+
                 updateHeaderAllowAllFromRows();
             });
             row.getCell(updateCol).setComponent(headerUpdateCb);
         }
+
 
         // ===== HEADER: DELETE =====
         if (deleteCol != null) {
@@ -225,17 +262,20 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                 if (updatingHeaderFromRows) return;
 
                 boolean v = Boolean.TRUE.equals(e.getValue());
-                for (EntityMatrixRow r : entityMatrixDc.getItems()) {
+
+                List<EntityMatrixRow> items = new ArrayList<>(entityMatrixDc.getItems());
+                for (EntityMatrixRow r : items) {
                     r.setCanDelete(v);
                     syncAllowAll(r);
-                    entityMatrixDc.replaceItem(r);
                 }
+                entityMatrixDc.setItems(items);
+
                 updateHeaderAllowAllFromRows();
             });
             row.getCell(deleteCol).setComponent(headerDeleteCb);
         }
-        updateHeaderAllowAllFromRows();
     }
+
 
     private void updateHeaderAllowAllFromRows() {
         if (headerAllowAllCb == null
@@ -537,6 +577,22 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
     }
 
     private void installAttrColumns() {
+        // ===== TÊN ATTRIBUTE: chỉ dùng caption, fallback name =====
+        DataGrid.Column<AttributeResourceModel> nameCol = attrMatrixTable.getColumnByKey("name");
+        if (nameCol != null) {
+            nameCol.setRenderer(new ComponentRenderer<>(row -> {
+                com.vaadin.flow.component.html.Span span =
+                        new com.vaadin.flow.component.html.Span();
+
+                String caption = Optional.ofNullable(row.getCaption()).orElse("");
+                String name = Optional.ofNullable(row.getName()).orElse("");
+
+                String text = !caption.isEmpty() ? caption : name;
+                span.setText(text);
+                return span;
+            }));
+        }
+
         // ===== VIEW =====
         DataGrid.Column<AttributeResourceModel> viewCol = attrMatrixTable.getColumnByKey("viewCol");
         if (viewCol != null) {
@@ -616,23 +672,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         }
     }
 
-    // =============================== Events =================================
 
-    @Subscribe(id = "entityMatrixDc", target = Target.DATA_CONTAINER)
-    public void onEntityMatrixItemChange(CollectionContainer.ItemChangeEvent<EntityMatrixRow> e) {
-        EntityMatrixRow row = e.getItem();
-        if (row == null) {
-            if (attrEntityLabel != null)
-                attrEntityLabel.setText("");
-            attrMatrixDc.setItems(Collections.emptyList());
-            return;
-        }
-
-        String cap = Optional.ofNullable(row.getEntityCaption()).orElse(row.getEntityName());
-        if (attrEntityLabel != null)
-            attrEntityLabel.setText("Entity: " + cap + " (" + row.getEntityName() + ")");
-        loadAttributesForEntity(row.getEntityName());
-    }
 
     // ======================= Utils & helpers ================================
 
@@ -678,5 +718,37 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                 new ArrayList<>(entityMatrixDc.getItems()),
                 attrCache
         );
+    }
+
+    // reset toàn bộ attribute: view/modify = false
+    private void resetAllAttributesFlags() {
+        // 1) reset trong cache
+        attrCache.values().forEach(list -> {
+            for (AttributeResourceModel a : list) {
+                a.setView(false);
+                a.setModify(false);
+            }
+        });
+
+        // 2) reset grid đang hiển thị bên phải (nếu có)
+        List<AttributeResourceModel> current = new ArrayList<>(attrMatrixDc.getItems());
+        if (!current.isEmpty()) {
+            current.forEach(a -> {
+                a.setView(false);
+                a.setModify(false);
+            });
+            attrMatrixDc.setItems(current);
+        }
+
+        // 3) reset summary attributes trên tất cả entity
+        List<EntityMatrixRow> entities = new ArrayList<>(entityMatrixDc.getItems());
+        for (EntityMatrixRow r : entities) {
+            r.setAttributes(null);
+        }
+        entityMatrixDc.setItems(entities);
+
+        // 4) reset header View/Modify của bảng attr
+        if (headerAttrViewCb != null)   headerAttrViewCb.setValue(false);
+        if (headerAttrModifyCb != null) headerAttrModifyCb.setValue(false);
     }
 }

@@ -20,13 +20,7 @@ public class EntityPolicyMatrixService {
     @Autowired
     private Metadata metadata;
 
-    // =========================================================================
-    //  PUBLIC API cho Fragment dùng
-    // =========================================================================
 
-    /**
-     * Tạo skeleton entity matrix (chưa apply policy).
-     */
     public List<EntityMatrixRow> buildMatrixSkeleton() {
         Map<String, String> entityOptions = resourcePolicyEditorUtils.getEntityOptionsMap();
         return entityOptions.entrySet().stream()
@@ -46,13 +40,7 @@ public class EntityPolicyMatrixService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Áp policies vào entity rows, đồng thời preload attr + summary.
-     *
-     * @param rows      list entity matrix (Fragment đang giữ)
-     * @param policies  list policy hiện có
-     * @param attrCache cache attr: key = entityName, value = list attr rows
-     */
+
     public void refreshMatrixFromPolicies(List<EntityMatrixRow> rows,
                                           Collection<ResourcePolicyModel> policies,
                                           Map<String, List<AttributeResourceModel>> attrCache) {
@@ -421,8 +409,6 @@ public class EntityPolicyMatrixService {
         boolean fullView = rows.stream().allMatch(a -> T(a.getView()));
         boolean fullModify = rows.stream().allMatch(a -> T(a.getModify()));
 
-        if (fullView && fullModify)
-            return "*,*";
         if (fullView || fullModify)
             return "*";
 
@@ -445,8 +431,6 @@ public class EntityPolicyMatrixService {
         String p = pattern.trim();
         if (p.isEmpty())
             return null;
-        if ("*,*".equals(p))
-            return "*,*";
         return normalizeAttrPattern(p);
     }
 
@@ -542,7 +526,7 @@ public class EntityPolicyMatrixService {
                                String pattern,
                                String viewId,
                                String modifyId) {
-        if ("*".equals(pattern) || "*,*".equals(pattern)) {
+        if ("*".equals(pattern) ) {
             list.add(newAttrPolicy(entity, "*", viewId));
             list.add(newAttrPolicy(entity, "*", modifyId));
         } else {
@@ -621,4 +605,5 @@ public class EntityPolicyMatrixService {
 
         return "entityattribute".equalsIgnoreCase(typeStr);
     }
+
 }

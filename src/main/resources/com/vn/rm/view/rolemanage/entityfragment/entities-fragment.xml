@@ -40,6 +40,11 @@
                               width="100%"
                               height="100%"
                               themeNames="compact">
+                        <columns resizable="true">
+                            <column property="caption" key="name"/>
+                            <column key="viewCol" header="View"/>
+                            <column key="modifyCol" header="Modify"/>
+                        </columns>
                     </dataGrid>
                 </vbox>
             </split>
