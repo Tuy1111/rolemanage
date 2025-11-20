@@ -41,7 +41,7 @@
                               height="100%"
                               themeNames="compact">
                         <columns resizable="true">
-                            <column property="name" header="Attribute" width="320px"/>
+                            <column property="caption" key="name"/>
                             <column key="viewCol" header="View"/>
                             <column key="modifyCol" header="Modify"/>
                         </columns>

@@ -82,6 +82,24 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         initAttrHeader();
     }
 
+    // =============================== Events =================================
+
+    @Subscribe(id = "entityMatrixDc", target = Target.DATA_CONTAINER)
+    public void onEntityMatrixItemChange(CollectionContainer.ItemChangeEvent<EntityMatrixRow> e) {
+        EntityMatrixRow row = e.getItem();
+        if (row == null) {
+            if (attrEntityLabel != null)
+                attrEntityLabel.setText("");
+            attrMatrixDc.setItems(Collections.emptyList());
+            return;
+        }
+
+        String cap = Optional.ofNullable(row.getEntityCaption()).orElse(row.getEntityName());
+        if (attrEntityLabel != null)
+            attrEntityLabel.setText("Entity: " + cap + " (" + row.getEntityName() + ")");
+        loadAttributesForEntity(row.getEntityName());
+    }
+
     // ========================================================================
     // ============ API để view cha có thể gọi khi cần ========================
     // ========================================================================
@@ -559,6 +577,22 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
     }
 
     private void installAttrColumns() {
+        // ===== TÊN ATTRIBUTE: chỉ dùng caption, fallback name =====
+        DataGrid.Column<AttributeResourceModel> nameCol = attrMatrixTable.getColumnByKey("name");
+        if (nameCol != null) {
+            nameCol.setRenderer(new ComponentRenderer<>(row -> {
+                com.vaadin.flow.component.html.Span span =
+                        new com.vaadin.flow.component.html.Span();
+
+                String caption = Optional.ofNullable(row.getCaption()).orElse("");
+                String name = Optional.ofNullable(row.getName()).orElse("");
+
+                String text = !caption.isEmpty() ? caption : name;
+                span.setText(text);
+                return span;
+            }));
+        }
+
         // ===== VIEW =====
         DataGrid.Column<AttributeResourceModel> viewCol = attrMatrixTable.getColumnByKey("viewCol");
         if (viewCol != null) {
@@ -638,23 +672,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         }
     }
 
-    // =============================== Events =================================
 
-    @Subscribe(id = "entityMatrixDc", target = Target.DATA_CONTAINER)
-    public void onEntityMatrixItemChange(CollectionContainer.ItemChangeEvent<EntityMatrixRow> e) {
-        EntityMatrixRow row = e.getItem();
-        if (row == null) {
-            if (attrEntityLabel != null)
-                attrEntityLabel.setText("");
-            attrMatrixDc.setItems(Collections.emptyList());
-            return;
-        }
-
-        String cap = Optional.ofNullable(row.getEntityCaption()).orElse(row.getEntityName());
-        if (attrEntityLabel != null)
-            attrEntityLabel.setText("Entity: " + cap + " (" + row.getEntityName() + ")");
-        loadAttributesForEntity(row.getEntityName());
-    }
 
     // ======================= Utils & helpers ================================
 
