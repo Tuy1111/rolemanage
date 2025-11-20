@@ -57,7 +57,19 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
         if (hasAllowAll) applyAllowAllToTree();
 
 //        showAssignedOnly.addValueChangeListener(e -> refreshTreeWithFilter());
-        allowAllViews.addValueChangeListener(e -> applyAllowAllToTree());
+
+        allowAllViews.addValueChangeListener(e -> {
+            if (!e.isFromClient()) return;
+
+            boolean enable = Boolean.TRUE.equals(e.getValue());
+            applyAllowAllToTree(); // cập nhật model (hiện có)
+
+            // refresh lại toàn bộ Tree để hiển thị đúng checkbox
+            for (PolicyGroupNode root : policyTreeDc.getItems()) {
+                apply(root, enable);
+            }
+            policyTreeGrid.getDataProvider().refreshAll();
+        });
     }
 
     public boolean isAllowAllViewsChecked() {
@@ -319,20 +331,19 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
 
         policyTreeGrid.removeAllColumns();
 
-        // Resource column — lớn nhất
-        var resourceCol = policyTreeGrid.addHierarchyColumn(node -> {
-                    return node.getMeta() != null
-                            ? node.getName() + "   " + node.getMeta()
-                            : node.getName();
-                })
+        // Resource column — rộng nhất
+        var resourceCol = policyTreeGrid.addHierarchyColumn(node ->
+                        node.getMeta() != null
+                                ? node.getName() + "   " + node.getMeta()
+                                : node.getName())
                 .setHeader("Resource")
-                .setFlexGrow(6)                 // lớn nhất
+                .setFlexGrow(6)
                 .setAutoWidth(true)
                 .setResizable(true)
-                .setTextAlign(ColumnTextAlign.START);  // trái
+                .setTextAlign(ColumnTextAlign.START);
 
         // Type column
-        var typeCol = policyTreeGrid.addColumn(PolicyGroupNode::getType)
+        policyTreeGrid.addColumn(PolicyGroupNode::getType)
                 .setHeader("Type")
                 .setFlexGrow(1)
                 .setTextAlign(ColumnTextAlign.CENTER)
@@ -340,31 +351,51 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
                 .setAutoWidth(true);
 
         // Action column
-        var actionCol = policyTreeGrid.addColumn(PolicyGroupNode::getAction)
+        policyTreeGrid.addColumn(PolicyGroupNode::getAction)
                 .setHeader("Action")
                 .setFlexGrow(1)
                 .setTextAlign(ColumnTextAlign.CENTER)
                 .setResizable(true)
                 .setAutoWidth(true);
+//
+//        // Effect column
+//        policyTreeGrid.addColumn(PolicyGroupNode::getEffect)
+//                .setHeader("Effect")
+//                .setFlexGrow(1)
+//                .setTextAlign(ColumnTextAlign.CENTER)
+//                .setResizable(true)
+//                .setAutoWidth(true);
 
-        // Effect column
-        var effectCol = policyTreeGrid.addColumn(PolicyGroupNode::getEffect)
-                .setHeader("Effect")
-                .setFlexGrow(1)
-                .setTextAlign(ColumnTextAlign.CENTER)
-                .setResizable(true)
-                .setAutoWidth(true);
-
-        // ALLOW
-        var allowCol = policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (cb, node) -> {
+        // ==============================
+        // ALLOW column
+        // ==============================
+        policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (cb, node) -> {
                     cb.setVisible(!node.getGroup());
                     cb.setEnabled(editable);
+
+                    // Đảm bảo luôn có 1 tick — nếu chưa có effect thì mặc định DENY
+                    if (node.getEffect() == null) {
+                        node.setAllow(false);
+                        node.setDeny(true);
+                        node.setEffect("DENY");
+                    }
+
                     cb.setValue(node.getAllow());
+
                     cb.addValueChangeListener(e -> {
-                        Boolean v = e.getValue();
-                        node.setAllow(v);
-                        node.setDeny(!v);
-                        node.setEffect(v ? "ALLOW" : "DENY");
+                        if (!e.isFromClient()) return;
+                        boolean value = Boolean.TRUE.equals(e.getValue());
+
+                        node.setAllow(value);
+                        node.setDeny(!value);
+                        node.setEffect(value ? "ALLOW" : "DENY");
+
+                        // Nếu bỏ tick => bỏ tick "Allow all views"
+                        if (!value) {
+                            allowAllViews.setValue(false);
+                        }
+
+                        policyTreeGrid.getDataProvider().refreshItem(node);
                     });
                 }))
                 .setHeader("Allow")
@@ -372,16 +403,36 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
                 .setTextAlign(ColumnTextAlign.CENTER)
                 .setResizable(true);
 
-        // DENY
-        var denyCol = policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (cb, node) -> {
+        // ==============================
+        // DENY column
+        // ==============================
+        policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (cb, node) -> {
                     cb.setVisible(!node.getGroup());
                     cb.setEnabled(editable);
+
+                    // Đảm bảo luôn có 1 tick — nếu chưa có effect thì mặc định DENY
+                    if (node.getEffect() == null) {
+                        node.setAllow(false);
+                        node.setDeny(true);
+                        node.setEffect("DENY");
+                    }
+
                     cb.setValue(node.getDeny());
+
                     cb.addValueChangeListener(e -> {
-                        boolean v = e.getValue();
-                        node.setDeny(v);
-                        node.setAllow(!v);
-                        node.setEffect(v ? "DENY" : "ALLOW");
+                        if (!e.isFromClient()) return;
+                        boolean value = Boolean.TRUE.equals(e.getValue());
+
+                        node.setDeny(value);
+                        node.setAllow(!value);
+                        node.setEffect(value ? "DENY" : "ALLOW");
+
+                        // Nếu tick Deny => bỏ tick "Allow all views"
+                        if (value) {
+                            allowAllViews.setValue(false);
+                        }
+
+                        policyTreeGrid.getDataProvider().refreshItem(node);
                     });
                 }))
                 .setHeader("Deny")
@@ -389,7 +440,7 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
                 .setTextAlign(ColumnTextAlign.CENTER)
                 .setResizable(true);
 
-        // Cho phép resize toàn grid
+        // Cho phép resize và reorder
         policyTreeGrid.setColumnReorderingAllowed(true);
     }
 
@@ -463,8 +514,11 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
 
     private void applyAllowAllToTree() {
         boolean enable = allowAllViews.getValue();
-        for (PolicyGroupNode root : policyTreeDc.getItems())
+        for (PolicyGroupNode root : policyTreeDc.getItems()) {
             apply(root, enable);
+        }
+        // cập nhật lại toàn bộ grid
+        policyTreeGrid.getDataProvider().refreshAll();
     }
 
     private void apply(PolicyGroupNode node, boolean enable) {
