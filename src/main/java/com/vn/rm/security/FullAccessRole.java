@@ -26,8 +26,6 @@ public interface FullAccessRole {
 
     String CODE = "system-full-access";
 
-    @ViewPolicy(viewIds = {"ext_sec_ResourceRoleModel.list", "rm_User.list", "sec_RowLevelRoleModel.list", "datatl_entityInspectorListView", "DataGridEmptyStateByPermissionsFragment", "EntitiesFragment", "FragmentRenderer", "UserInterfaceFragment", "changePasswordView", "datatl_entityInspectorDetailView", "entityInfoView", "flowui_AddConditionView", "flowui_DateIntervalDialog", "flowui_GroupFilterCondition.detail", "flowui_JpqlFilterCondition.detail", "flowui_PropertyFilterCondition.detail", "headerPropertyFilterLayout", "inputDialog", "multiValueSelectDialog", "resetPasswordView", "rm_LoginView", "rm_MainView", "rm_ResourceRoleEditView", "rm_User.detail", "roleAssignmentView", "sec_EntityAttributeResourcePolicyModel.create", "sec_EntityAttributeResourcePolicyModel.detail", "sec_EntityResourcePolicyModel.create", "sec_EntityResourcePolicyModel.detail", "sec_GraphQLResourcePolicyModel.detail", "sec_MenuResourcePolicyModel.create", "sec_MenuResourcePolicyModel.detail", "sec_ResourcePolicyModel.detail", "sec_ResourceRoleModel.detail", "sec_ResourceRoleModel.lookup", "sec_RowLevelPolicyModel.detail", "sec_RowLevelRoleModel.detail", "sec_RowLevelRoleModel.lookup", "sec_SpecificResourcePolicyModel.detail", "sec_SubstituteUserView", "sec_UserSubstitution.detail", "sec_UserSubstitution.view", "sec_ViewResourcePolicyModel.create", "sec_ViewResourcePolicyModel.detail"})
-    @MenuPolicy(menuIds = {"ext_sec_ResourceRoleModel.list", "rm_User.list", "sec_RowLevelRoleModel.list", "datatl_entityInspectorListView", "sec_ResourceRoleModel.list"})
     @SpecificPolicy(resources = "*")
     void fullAccess();
 
@@ -152,4 +150,8 @@ public interface FullAccessRole {
     @EntityPolicy(entityClass = UserSubstitutionModel.class, actions = EntityPolicyAction.ALL)
     @EntityAttributePolicy(entityClass = UserSubstitutionModel.class, attributes = "*", action = EntityAttributePolicyAction.VIEW)
     void userSubstitutionModel();
+
+    @MenuPolicy(menuIds = "*")
+    @ViewPolicy(viewIds = "*")
+    void screens();
 }

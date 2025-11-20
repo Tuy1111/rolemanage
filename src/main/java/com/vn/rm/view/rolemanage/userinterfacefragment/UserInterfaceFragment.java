@@ -1,6 +1,7 @@
 package com.vn.rm.view.rolemanage.userinterfacefragment;
 
 import com.vaadin.flow.component.checkbox.Checkbox;
+import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import io.jmix.flowui.component.grid.TreeDataGrid;
@@ -37,7 +38,7 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
 
     @ViewComponent private CollectionContainer<PolicyGroupNode> policyTreeDc;
     @ViewComponent private TreeDataGrid<PolicyGroupNode> policyTreeGrid;
-    @ViewComponent private Checkbox showAssignedOnly;
+//    @ViewComponent private Checkbox showAssignedOnly;
     @ViewComponent private Checkbox allowAllViews;
 
     // ====================================================================================
@@ -55,7 +56,7 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
         allowAllViews.setValue(hasAllowAll);
         if (hasAllowAll) applyAllowAllToTree();
 
-        showAssignedOnly.addValueChangeListener(e -> refreshTreeWithFilter());
+//        showAssignedOnly.addValueChangeListener(e -> refreshTreeWithFilter());
         allowAllViews.addValueChangeListener(e -> applyAllowAllToTree());
     }
 
@@ -314,89 +315,103 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
     // UI GRID RENDERING
     // ====================================================================================
     private void setupTreeGrid(String source) {
-
         boolean editable = "DATABASE".equalsIgnoreCase(source);
 
         policyTreeGrid.removeAllColumns();
 
-        policyTreeGrid.addHierarchyColumn(node -> {
-            return node.getMeta() != null
-                    ? node.getName() + "   " + node.getMeta()
-                    : node.getName();
-        }).setHeader("Resource");
+        // Resource column — lớn nhất
+        var resourceCol = policyTreeGrid.addHierarchyColumn(node -> {
+                    return node.getMeta() != null
+                            ? node.getName() + "   " + node.getMeta()
+                            : node.getName();
+                })
+                .setHeader("Resource")
+                .setFlexGrow(6)                 // lớn nhất
+                .setAutoWidth(true)
+                .setResizable(true)
+                .setTextAlign(ColumnTextAlign.START);  // trái
 
-        policyTreeGrid.addColumn(PolicyGroupNode::getType).setHeader("Type");
-        policyTreeGrid.addColumn(PolicyGroupNode::getAction).setHeader("Action");
-        policyTreeGrid.addColumn(PolicyGroupNode::getEffect).setHeader("Effect");
-// ALLOW
-        policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (cb, node) -> {
-            cb.setVisible(!node.getGroup());
-            cb.setEnabled(editable);
-            cb.setValue(node.getAllow());
+        // Type column
+        var typeCol = policyTreeGrid.addColumn(PolicyGroupNode::getType)
+                .setHeader("Type")
+                .setFlexGrow(1)
+                .setTextAlign(ColumnTextAlign.CENTER)
+                .setResizable(true)
+                .setAutoWidth(true);
 
-            cb.addValueChangeListener(e -> {
-                if (!e.isFromClient()) return;
-                boolean value = Boolean.TRUE.equals(e.getValue());
+        // Action column
+        var actionCol = policyTreeGrid.addColumn(PolicyGroupNode::getAction)
+                .setHeader("Action")
+                .setFlexGrow(1)
+                .setTextAlign(ColumnTextAlign.CENTER)
+                .setResizable(true)
+                .setAutoWidth(true);
 
-                node.setAllow(value);
-                node.setDeny(!value);
-                node.setEffect(value ? "ALLOW" : "DENY");
+        // Effect column
+        var effectCol = policyTreeGrid.addColumn(PolicyGroupNode::getEffect)
+                .setHeader("Effect")
+                .setFlexGrow(1)
+                .setTextAlign(ColumnTextAlign.CENTER)
+                .setResizable(true)
+                .setAutoWidth(true);
 
-                // Nếu có thay đổi, mà không còn all-allow nữa → bỏ tick AllowAll
-                if (!value) {
-                    allowAllViews.setValue(false);
-                }
+        // ALLOW
+        var allowCol = policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (cb, node) -> {
+                    cb.setVisible(!node.getGroup());
+                    cb.setEnabled(editable);
+                    cb.setValue(node.getAllow());
+                    cb.addValueChangeListener(e -> {
+                        Boolean v = e.getValue();
+                        node.setAllow(v);
+                        node.setDeny(!v);
+                        node.setEffect(v ? "ALLOW" : "DENY");
+                    });
+                }))
+                .setHeader("Allow")
+                .setFlexGrow(1)
+                .setTextAlign(ColumnTextAlign.CENTER)
+                .setResizable(true);
 
-                policyTreeGrid.getDataProvider().refreshItem(node);
-            });
-        })).setHeader("Allow");
+        // DENY
+        var denyCol = policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (cb, node) -> {
+                    cb.setVisible(!node.getGroup());
+                    cb.setEnabled(editable);
+                    cb.setValue(node.getDeny());
+                    cb.addValueChangeListener(e -> {
+                        boolean v = e.getValue();
+                        node.setDeny(v);
+                        node.setAllow(!v);
+                        node.setEffect(v ? "DENY" : "ALLOW");
+                    });
+                }))
+                .setHeader("Deny")
+                .setFlexGrow(1)
+                .setTextAlign(ColumnTextAlign.CENTER)
+                .setResizable(true);
 
-
-// DENY
-        policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (cb, node) -> {
-            cb.setVisible(!node.getGroup());
-            cb.setEnabled(editable);
-            cb.setValue(node.getDeny());
-
-            cb.addValueChangeListener(e -> {
-                if (!e.isFromClient()) return;
-                boolean value = Boolean.TRUE.equals(e.getValue());
-
-                node.setDeny(value);
-                node.setAllow(!value);
-                node.setEffect(value ? "DENY" : "ALLOW");
-
-                // Nếu người dùng chọn Deny → bỏ tick AllowAllViews
-                if (value) {
-                    allowAllViews.setValue(false);
-                }
-
-                policyTreeGrid.getDataProvider().refreshItem(node);
-            });
-        })).setHeader("Deny");
-
-
+        // Cho phép resize toàn grid
+        policyTreeGrid.setColumnReorderingAllowed(true);
     }
 
     // ====================================================================================
     // FILTER
     // ====================================================================================
-    private void refreshTreeWithFilter() {
-        boolean only = showAssignedOnly.getValue();
-
-        if (!only) {
-            policyTreeGrid.setItems(policyTreeDc.getItems(), PolicyGroupNode::getChildren);
-            return;
-        }
-
-        List<PolicyGroupNode> filtered = new ArrayList<>();
-        for (PolicyGroupNode r : policyTreeDc.getItems()) {
-            PolicyGroupNode f = filterAssigned(r);
-            if (f != null) filtered.add(f);
-        }
-
-        policyTreeGrid.setItems(filtered, PolicyGroupNode::getChildren);
-    }
+//    private void refreshTreeWithFilter() {
+//        boolean only = showAssignedOnly.getValue();
+//
+//        if (!only) {
+//            policyTreeGrid.setItems(policyTreeDc.getItems(), PolicyGroupNode::getChildren);
+//            return;
+//        }
+//
+//        List<PolicyGroupNode> filtered = new ArrayList<>();
+//        for (PolicyGroupNode r : policyTreeDc.getItems()) {
+//            PolicyGroupNode f = filterAssigned(r);
+//            if (f != null) filtered.add(f);
+//        }
+//
+//        policyTreeGrid.setItems(filtered, PolicyGroupNode::getChildren);
+//    }
 
     private PolicyGroupNode filterAssigned(PolicyGroupNode node) {
 

@@ -17,7 +17,7 @@
 
         <!-- Tree UI/Menu -->
         <collection id="policyTreeDc"
-                    class="com.vn.rm.view.rolemanage.userinterfacefragment.PolicyGroupNode"/>
+                    class="com.vn.rm.view.rolemanage.userinterfacefragment.PolicyGroupNode" />
     </data>
 
     <facets>
