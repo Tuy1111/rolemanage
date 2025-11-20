@@ -1,7 +1,12 @@
 package com.vn.rm.security;
 
+
 import com.vn.rm.entity.User;
 import com.vn.rm.view.rolemanage.entityfragment.EntityMatrixRow;
+
+import com.vn.rm.entity.PolicyGroupNode;
+import com.vn.rm.entity.User;
+
 import io.jmix.core.entity.KeyValueEntity;
 import io.jmix.datatoolsflowui.view.entityinfo.model.InfoValue;
 import io.jmix.flowui.component.genericfilter.model.FilterConfigurationModel;
@@ -153,5 +158,6 @@ public interface FullAccessRole {
 
     @MenuPolicy(menuIds = "*")
     @ViewPolicy(viewIds = "*")
+
     void screens();
 }

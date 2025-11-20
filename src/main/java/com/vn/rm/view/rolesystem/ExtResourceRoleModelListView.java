@@ -61,15 +61,17 @@ public class ExtResourceRoleModelListView extends ResourceRoleModelListView {
 
 
     @Subscribe("roleModelsTable.editCustomRole")
-    public void onRoleModelsTableEditCustomRole(ActionPerformedEvent e) {
-        ResourceRoleModel selected = roleModelsTable.getSingleSelectedItem();
-        if (selected == null) return;
 
-        String serialized = urlParamSerializer.serialize(selected.getCode());
-        viewNavigators.view(this, ResourceRoleEditView.class)
-                .withRouteParameters(new RouteParameters("code", serialized))
+    public void onRoleModelsTableEditCustomRole(final ActionPerformedEvent event) {
+        ResourceRoleModel roleModel = roleModelsTable.getSingleSelectedItem();
+        if (roleModel != null) {
+        viewNavigators.view(this,ResourceRoleEditView.class)
+                .withRouteParameters(new RouteParameters("code", roleModel.getCode()))
+
                 .navigate();
+        }
     }
+
 
 
 }
