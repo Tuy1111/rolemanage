@@ -1,0 +1,19 @@
+/* Cột Resource chiếm rộng hơn */
+.policy-tree ::part(column-header-cell:first-child),
+.policy-tree ::part(hierarchical-cell) {
+    flex: 9 1 auto !important;
+    width: auto !important;
+}
+
+/* Các cột còn lại nhỏ hơn */
+.policy-tree ::part(column-header-cell:nth-child(n+2)),
+.policy-tree ::part(cell:nth-child(n+2)) {
+    flex: 1 1 0 !important;
+    width: 80px !important;
+    text-align: center;
+}
+
+/* Test header background (để check có nhận CSS không) */
+.policy-tree ::part(header-cell) {
+    background-color: #ffe9e9 !important;
+}

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<fragment xmlns="http://jmix.io/schema/flowui/fragment">
+
+    <data>
+        <collection id="resourcePoliciesDc" class="io.jmix.security.model.ResourcePolicyModel"/>
+        <!-- Ma trận quyền theo entity -->
+        <collection id="entityMatrixDc" class="com.vn.rm.view.rolemanage.entityfragment.EntityMatrixRow"/>
+        <collection id="attrMatrixDc" class="io.jmix.securityflowui.view.resourcepolicy.AttributeResourceModel"/>
+
+    </data>
+
+    <content>
+        <vbox id="root" width="100%" height="100%" expand="split">
+
+            <split id="split" width="100%" height="100%" themeNames="splitter-spacing" splitterPosition="60">
+                <vbox width="100%" height="100%" expand="entityMatrixTable">
+                    <h3 text="Entities permissions"/>
+                    <dataGrid id="entityMatrixTable"
+                              dataContainer="entityMatrixDc"
+                              width="100%"
+                              height="100%"
+                              themeNames="compact">
+                        <columns resizable="true">
+                            <column property="entityCaption" header="Entity" width="320px"/>
+                            <column key="allowAllCol" header="Allow all"/>
+                            <column key="createCol" header="Create"/>
+                            <column key="readCol" header="Read"/>
+                            <column key="updateCol" header="Update"/>
+                            <column key="deleteCol" header="Delete"/>
+                            <column property="attributes" header="Attributes" width="160px"/>
+                        </columns>
+                    </dataGrid>
+                </vbox>
+
+                <vbox width="100%" height="100%" expand="attrMatrixTable">
+                    <h3 text="Attributes Permissions"/>
+                    <span id="attrEntityLabel"/>
+                    <dataGrid id="attrMatrixTable"
+                              dataContainer="attrMatrixDc"
+                              width="100%"
+                              height="100%"
+                              themeNames="compact">
+                    </dataGrid>
+                </vbox>
+            </split>
+        </vbox>
+    </content>
+</fragment>
