@@ -328,32 +328,54 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
         policyTreeGrid.addColumn(PolicyGroupNode::getType).setHeader("Type");
         policyTreeGrid.addColumn(PolicyGroupNode::getAction).setHeader("Action");
         policyTreeGrid.addColumn(PolicyGroupNode::getEffect).setHeader("Effect");
-
-        // ALLOW
+// ALLOW
         policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (cb, node) -> {
             cb.setVisible(!node.getGroup());
             cb.setEnabled(editable);
             cb.setValue(node.getAllow());
+
             cb.addValueChangeListener(e -> {
-                Boolean v = e.getValue();
-                node.setAllow(v);
-                node.setDeny(!v);
-                node.setEffect(v ? "ALLOW" : "DENY");
+                if (!e.isFromClient()) return;
+                boolean value = Boolean.TRUE.equals(e.getValue());
+
+                node.setAllow(value);
+                node.setDeny(!value);
+                node.setEffect(value ? "ALLOW" : "DENY");
+
+                // Nếu có thay đổi, mà không còn all-allow nữa → bỏ tick AllowAll
+                if (!value) {
+                    allowAllViews.setValue(false);
+                }
+
+                policyTreeGrid.getDataProvider().refreshItem(node);
             });
         })).setHeader("Allow");
 
-        // DENY
+
+// DENY
         policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (cb, node) -> {
             cb.setVisible(!node.getGroup());
             cb.setEnabled(editable);
             cb.setValue(node.getDeny());
+
             cb.addValueChangeListener(e -> {
-                boolean v = e.getValue();
-                node.setDeny(v);
-                node.setAllow(!v);
-                node.setEffect(v ? "DENY" : "ALLOW");
+                if (!e.isFromClient()) return;
+                boolean value = Boolean.TRUE.equals(e.getValue());
+
+                node.setDeny(value);
+                node.setAllow(!value);
+                node.setEffect(value ? "DENY" : "ALLOW");
+
+                // Nếu người dùng chọn Deny → bỏ tick AllowAllViews
+                if (value) {
+                    allowAllViews.setValue(false);
+                }
+
+                policyTreeGrid.getDataProvider().refreshItem(node);
             });
         })).setHeader("Deny");
+
+
     }
 
     // ====================================================================================
