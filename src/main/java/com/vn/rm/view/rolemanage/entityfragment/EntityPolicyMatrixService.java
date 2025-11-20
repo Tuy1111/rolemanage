@@ -621,4 +621,5 @@ public class EntityPolicyMatrixService {
 
         return "entityattribute".equalsIgnoreCase(typeStr);
     }
+
 }
