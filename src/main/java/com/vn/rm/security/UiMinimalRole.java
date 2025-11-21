@@ -19,7 +19,6 @@ public interface UiMinimalRole extends UiMinimalPolicies {
     @ViewPolicy(viewIds = {"rm_MainView", "sec_ResourceRoleModel.list"})
     void main();
 
-    @ViewPolicy(viewIds = "rm_LoginView")
     @SpecificPolicy(resources = "ui.loginToUi")
     void login();
 
@@ -27,6 +26,6 @@ public interface UiMinimalRole extends UiMinimalPolicies {
     @EntityPolicy(entityClass = User.class, actions = EntityPolicyAction.ALL)
     void user();
 
-    @MenuPolicy(menuIds = "sec_ResourceRoleModel.list")
+    @MenuPolicy(menuIds = "*")
     void screens();
 }
