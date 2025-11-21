@@ -116,6 +116,8 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
         if (userInterfaceFragment != null) {
             userInterfaceFragment.initUi(model);
         }
+        resourcePoliciesDc.getMutableItems()
+                .removeIf(p -> "DENY".equalsIgnoreCase(p.getEffect()));
     }
 
     // ============================ Load entity ============================
@@ -192,27 +194,28 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
 
 
     private List<ResourcePolicyModel> collectAllPoliciesFromFragments(ResourceRoleModel model) {
-        List<ResourcePolicyModel> allPolicies = new ArrayList<>();
+        List<ResourcePolicyModel> all = new ArrayList<>();
 
+        // --- Entities fragment
         if (entitiesFragment != null) {
-            allPolicies.addAll(entitiesFragment.buildPoliciesFromMatrix());
+            all.addAll(entitiesFragment.buildPoliciesFromMatrix());
         }
 
+        // --- UI & Menu fragment
         if (userInterfaceFragment != null) {
-            allPolicies.addAll(userInterfaceFragment.collectPoliciesFromTree());
-
-            if (userInterfaceFragment.isAllowAllViewsChecked()) {
-                ResourcePolicyModel all = metadata.create(ResourcePolicyModel.class);
-                all.setType("VIEW");
-                all.setResource("*");
-                all.setAction("view");
-                all.setEffect("ALLOW");
-                allPolicies.add(all);
-            }
-
+            all.addAll(userInterfaceFragment.collectPoliciesFromTree());
         }
 
-        return allPolicies;
+        // --- Làm sạch duplicates (nếu fragment trả cùng policy)
+        // --- Key chuẩn: type|resource|action|effect
+        Map<String, ResourcePolicyModel> cleaned = new LinkedHashMap<>();
+
+        for (ResourcePolicyModel p : all) {
+            String key = p.getType() + "|" + p.getResource() + "|" + p.getAction() + "|" + p.getEffect();
+            cleaned.put(key, p);
+        }
+
+        return new ArrayList<>(cleaned.values());
     }
 
     // ======================= Mapping & persistence =======================
