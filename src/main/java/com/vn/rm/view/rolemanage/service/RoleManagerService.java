@@ -43,10 +43,7 @@ public class RoleManagerService {
     @Autowired private ApplicationContext applicationContext;
 
 
-    @ViewComponent private CollectionContainer<PolicyGroupNode> policyTreeDc;
-    @ViewComponent private TreeDataGrid<PolicyGroupNode> policyTreeGrid;
-    @ViewComponent private Checkbox allowAllViews;
-    private boolean suppressAllowAllEvent = false;
+
     private Map<String, List<PolicyGroupNode>> leafIndex = new HashMap<>();
 
     private static final String ACT_CREATE = EntityPolicyAction.CREATE.getId();
@@ -355,65 +352,17 @@ public class RoleManagerService {
     }
 
 
-    // =====================================================================
-    // BUILD TREE
-    // =====================================================================
-    public void buildTree(ResourceRoleModel model) {
-
-        Map<String, List<MenuItem>> viewMenuMap = buildViewMenuMap();
-
-        PolicyGroupNode viewRoot = new PolicyGroupNode("View Access", true);
-        PolicyGroupNode menuRoot = new PolicyGroupNode("Menu Access", true);
-
-        buildViewsTree(viewRoot, viewMenuMap);
-        viewRoot = compress(viewRoot);
-
-        buildMenuTree(menuRoot);
-
-        leafIndex.clear();
-        indexLeaves(menuRoot);
-        indexLeaves(viewRoot);
-
-        Set<PolicyGroupNode> initialized = new HashSet<>();
-        for (List<PolicyGroupNode> nodes : leafIndex.values()) {
-            for (PolicyGroupNode node : nodes) {
-                if (initialized.add(node)) {
-                    node.resetState();
-                }
-            }
-        }
-
-        // Apply ALLOW from DB only
-        for (ResourcePolicyModel p : model.getResourcePolicies()) {
-
-            if (!"ALLOW".equalsIgnoreCase(p.getEffect()))
-                continue;
-
-            String key = buildLeafKey(p.getResource(), p.getAction());
-            List<PolicyGroupNode> nodes = key == null ? null : leafIndex.get(key);
-            if (nodes == null)
-                continue;
-
-            for (PolicyGroupNode n : nodes) {
-                applyState(n, true);
-                n.setDenyDefault(false);
-            }
-        }
-
-        policyTreeDc.setItems(Arrays.asList(viewRoot, menuRoot));
-        policyTreeGrid.setItems(Arrays.asList(viewRoot, menuRoot), PolicyGroupNode::getChildren);
-    }
 
     private String buildLeafKey(PolicyGroupNode node) {
         return buildLeafKey(node.getResource(), node.getAction());
     }
 
-    private String buildLeafKey(String resource, String action) {
+    public String buildLeafKey(String resource, String action) {
         if (resource == null || action == null)
             return null;
         return resource + "|" + action;
     }
-    private PolicyGroupNode compress(PolicyGroupNode node) {
+    public PolicyGroupNode compress(PolicyGroupNode node) {
 
         if (!node.getGroup())
             return node;
@@ -439,7 +388,7 @@ public class RoleManagerService {
 
         return node;
     }
-    private void indexLeaves(PolicyGroupNode node) {
+    public void indexLeaves(PolicyGroupNode node) {
         if (node.isLeaf()) {
             String key = buildLeafKey(node);
             if (key != null) {
@@ -453,7 +402,7 @@ public class RoleManagerService {
     // =====================================================================
     // BUILD VIEWS TREE — Menu-aware
     // =====================================================================
-    private void buildViewsTree(PolicyGroupNode root, Map<String, List<MenuItem>> viewMenuMap) {
+    public void buildViewsTree(PolicyGroupNode root, Map<String, List<MenuItem>> viewMenuMap) {
 
         Map<String, String> classToViewId = new LinkedHashMap<>();
 
@@ -669,7 +618,7 @@ public class RoleManagerService {
     // =====================================================================
     // BUILD MENU TREE
     // =====================================================================
-    private void buildMenuTree(PolicyGroupNode menuRoot) {
+    public void buildMenuTree(PolicyGroupNode menuRoot) {
 
         for (MenuItem root : menuConfig.getRootItems())
             addMenuNode(menuRoot, root);
@@ -722,81 +671,8 @@ public class RoleManagerService {
     // =====================================================================
     // RENDER COLUMNS
     // =====================================================================
-    public void setupTreeGrid(String source) {
-        boolean editable = "DATABASE".equalsIgnoreCase(source);
 
-        policyTreeGrid.removeAllColumns();
-
-        policyTreeGrid.addHierarchyColumn(node ->
-                        node.getMeta() != null
-                                ? node.getName() + "   " + node.getMeta()
-                                : node.getName())
-                .setHeader("Resource")
-                .setFlexGrow(6)
-                .setAutoWidth(true)
-                .setResizable(true)
-                .setTextAlign(ColumnTextAlign.START);
-
-        policyTreeGrid.addColumn(PolicyGroupNode::getType)
-                .setHeader("Type")
-                .setTextAlign(ColumnTextAlign.CENTER);
-
-        policyTreeGrid.addColumn(PolicyGroupNode::getAction)
-                .setHeader("Action")
-                .setTextAlign(ColumnTextAlign.CENTER);
-
-        // ALLOW checkbox
-        policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (cb, node) -> {
-            cb.setVisible(node.isLeaf());
-            cb.setEnabled(editable);
-
-            cb.setValue("ALLOW".equals(node.getEffect()));
-
-            cb.addValueChangeListener(e -> {
-                if (!e.isFromClient()) return;
-
-                boolean checked = Boolean.TRUE.equals(e.getValue());
-
-                syncLinkedLeaves(node, checked);
-                policyTreeGrid.getDataProvider().refreshAll();
-            });
-
-        })).setHeader("Allow");
-
-        // DENY checkbox (UI only)
-        policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (cb, node) -> {
-            cb.setVisible(node.isLeaf());
-            cb.setEnabled(editable);
-
-            cb.setValue(!"ALLOW".equals(node.getEffect()));
-
-            cb.addValueChangeListener(e -> {
-                if (!e.isFromClient()) return;
-
-                boolean checked = Boolean.TRUE.equals(e.getValue());
-                if (checked) {
-                    syncLinkedLeaves(node, false);
-                    policyTreeGrid.getDataProvider().refreshAll();
-                }
-            });
-
-        })).setHeader("Deny");
-
-        policyTreeGrid.setColumnReorderingAllowed(true);
-    }
-
-    // =====================================================================
-    // APPLY ALLOW ALL
-    // =====================================================================
-    public void applyAllowAll(boolean enable) {
-
-        for (PolicyGroupNode root : policyTreeDc.getItems())
-            applyForAll(root, enable);
-
-        policyTreeGrid.getDataProvider().refreshAll();
-    }
-
-    private void applyForAll(PolicyGroupNode node, boolean enable) {
+    public void applyForAll(PolicyGroupNode node, boolean enable) {
 
         if (node.isLeaf()) {
 
@@ -806,42 +682,7 @@ public class RoleManagerService {
         for (PolicyGroupNode c : node.getChildren())
             applyForAll(c, enable);
     }
-    public boolean isAllowAllViewsChecked() {
-        return Boolean.TRUE.equals(allowAllViews.getValue());
-    }
 
-    // =====================================================================
-    // COLLECT POLICIES — only ALLOW saved
-    // =====================================================================
-    public List<ResourcePolicyModel> collectPoliciesFromTree() {
-
-        List<ResourcePolicyModel> list = new ArrayList<>();
-
-        if (isAllowAllViewsChecked()) {
-            ResourcePolicyModel p = new ResourcePolicyModel();
-            p.setId(UUID.randomUUID());
-            p.setType("VIEW");
-            p.setResource("*");
-            p.setAction("view");
-            p.setEffect("ALLOW");
-            list.add(p);
-
-            ResourcePolicyModel menu = new ResourcePolicyModel();
-            menu.setId(UUID.randomUUID());
-            menu.setType("MENU");
-            menu.setResource("*");
-            menu.setAction("menu");
-            menu.setEffect("ALLOW");
-            list.add(menu);
-
-            return list;
-        }
-
-        for (PolicyGroupNode root : policyTreeDc.getItems())
-            collect(root, list);
-
-        return list;
-    }
 
     public void collect(PolicyGroupNode node, List<ResourcePolicyModel> list) {
 
@@ -860,7 +701,7 @@ public class RoleManagerService {
         for (PolicyGroupNode c : node.getChildren())
             collect(c, list);
     }
-    private void syncLinkedLeaves(PolicyGroupNode node, boolean allow) {
+    public void syncLinkedLeaves(PolicyGroupNode node, boolean allow) {
         String key = buildLeafKey(node);
         if (key == null) {
             applyState(node, allow);
@@ -877,12 +718,12 @@ public class RoleManagerService {
             applyState(target, allow);
     }
 
-    private void applyState(PolicyGroupNode node, boolean allow) {
+    public void applyState(PolicyGroupNode node, boolean allow) {
         node.setEffect(allow ? "ALLOW" : null);
         node.setAllow(allow);
         node.setDeny(!allow);
     }
-    private Map<String, List<MenuItem>> buildViewMenuMap() {
+    public Map<String, List<MenuItem>> buildViewMenuMap() {
         Map<String, List<MenuItem>> map = new HashMap<>();
         for (MenuItem root : menuConfig.getRootItems()) {
             collectMenuItems(root, map);
