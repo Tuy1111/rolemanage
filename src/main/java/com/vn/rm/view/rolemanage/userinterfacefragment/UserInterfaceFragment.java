@@ -36,7 +36,7 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
     @ViewComponent private Checkbox allowAllViews;
 
     private boolean suppressAllowAllEvent = false;
-    private Map<String, List<PolicyGroupNode>> leafIndex = new HashMap<>();
+    private final Map<String, List<PolicyGroupNode>> leafIndex = new HashMap<>();
     @Autowired
     private RoleManagerService  roleManagerService;
     // =====================================================================

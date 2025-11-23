@@ -352,16 +352,23 @@ public class RoleManagerService {
     }
 
 
-
+    /**
+     * Tạo key duy nhất cho leaf bằng resource + action.
+     */
     private String buildLeafKey(PolicyGroupNode node) {
         return buildLeafKey(node.getResource(), node.getAction());
     }
-
+    /**
+     * Trả về "resource|action" để dùng làm key đồng bộ leaf.
+     */
     public String buildLeafKey(String resource, String action) {
         if (resource == null || action == null)
             return null;
         return resource + "|" + action;
     }
+    /**
+     * Nén cây: gộp các folder 1-1 nếu không có leaf bên trong.
+     */
     public PolicyGroupNode compress(PolicyGroupNode node) {
 
         if (!node.getGroup())
@@ -388,6 +395,9 @@ public class RoleManagerService {
 
         return node;
     }
+    /**
+     * Index toàn bộ leaf trong cây để đồng bộ trạng thái allow/deny.
+     */
     public void indexLeaves(PolicyGroupNode node) {
         if (node.isLeaf()) {
             String key = buildLeafKey(node);
@@ -399,9 +409,12 @@ public class RoleManagerService {
         for (PolicyGroupNode c : node.getChildren())
             indexLeaves(c);
     }
-    // =====================================================================
-    // BUILD VIEWS TREE — Menu-aware
-    // =====================================================================
+    /**
+     * Xây dựng cây View Access:
+     *  - phân cấp theo package
+     *  - gắn leaf view
+     *  - gắn leaf menu nếu view nằm trong menu.
+     */
     public void buildViewsTree(PolicyGroupNode root, Map<String, List<MenuItem>> viewMenuMap) {
 
         Map<String, String> classToViewId = new LinkedHashMap<>();
@@ -448,7 +461,9 @@ public class RoleManagerService {
         }
     }
 
-
+    /**
+     * Quét classpath để lấy danh sách fragment có @FragmentDescriptor.
+     */
     private Map<String, String> scanFragments() {
         Map<String, String> result = new HashMap<>();
         try {
@@ -483,7 +498,9 @@ public class RoleManagerService {
         }
         return result;
     }
-
+    /**
+     * Tạo các folder theo package từ className.
+     */
     private PolicyGroupNode buildPackageTree(PolicyGroupNode root, String className) {
         String[] parts = className.split("\\.");
         PolicyGroupNode cur = root;
@@ -505,10 +522,9 @@ public class RoleManagerService {
         return cur;
     }
 
-
-    // =====================================================================
-    // ADD LEAF — menu-aware
-    // =====================================================================
+    /**
+     * Thêm leaf VIEW hoặc MENU vào cây, tùy thuộc view có trong menu hay không.
+     */
     private void addLeaf(PolicyGroupNode parent, String viewId, String meta, List<MenuItem> menuItems) {
 
         if (menuItems != null && !menuItems.isEmpty()) {
@@ -544,7 +560,9 @@ public class RoleManagerService {
             parent.getChildren().add(leaf);
         }
     }
-
+    /**
+     * Tạo đầy đủ folder menu hierarchy từ một MenuItem.
+     */
     private PolicyGroupNode ensureMenuFolder(PolicyGroupNode parent, MenuItem item, boolean singleMenuGroup) {
         Deque<MenuItem> stack = new ArrayDeque<>();
         MenuItem current = item;
@@ -592,7 +610,9 @@ public class RoleManagerService {
 
         return curNode;
     }
-
+    /**
+     * Chọn viewId ưu tiên (viewId custom được ưu tiên hơn).
+     */
     private String selectPreferredViewId(String existing, String candidate) {
         if (existing == null)
             return candidate;
@@ -605,25 +625,28 @@ public class RoleManagerService {
 
         return existing;
     }
-
+    /**
+     * Kiểm tra viewId có phải dạng custom hay không.
+     */
     private boolean isCustomViewId(String viewId) {
         if (viewId == null || viewId.isEmpty())
             return false;
         return viewId.contains(".") || viewId.contains("_") || Character.isLowerCase(viewId.charAt(0));
     }
-
-
-
-
-    // =====================================================================
-    // BUILD MENU TREE
-    // =====================================================================
+    /**
+     * Xây dựng toàn bộ cây Menu Access từ MenuConfig.
+     */
     public void buildMenuTree(PolicyGroupNode menuRoot) {
 
         for (MenuItem root : menuConfig.getRootItems())
             addMenuNode(menuRoot, root);
     }
-
+    /**
+     * Thêm node menu:
+     *  - nếu có view → thêm Allow Menu + View
+     *  - nếu có child → xây tiếp
+     *  - nếu không có gì → tạo leaf menu.
+     */
     private void addMenuNode(PolicyGroupNode parentNode, MenuItem item) {
 
         String caption = item.getView() != null ? item.getView() : item.getId();
@@ -668,9 +691,9 @@ public class RoleManagerService {
         }
     }
 
-    // =====================================================================
-    // RENDER COLUMNS
-    // =====================================================================
+    /**
+     * Đặt allow/deny cho toàn bộ leaf trong cây.
+     */
 
     public void applyForAll(PolicyGroupNode node, boolean enable) {
 
@@ -683,7 +706,9 @@ public class RoleManagerService {
             applyForAll(c, enable);
     }
 
-
+    /**
+     * Thu thập tất cả leaf đang ALLOW để lưu thành ResourcePolicyModel.
+     */
     public void collect(PolicyGroupNode node, List<ResourcePolicyModel> list) {
 
         if (node.isLeaf() && "ALLOW".equals(node.getEffect())) {
@@ -701,6 +726,10 @@ public class RoleManagerService {
         for (PolicyGroupNode c : node.getChildren())
             collect(c, list);
     }
+
+    /**
+     * Đồng bộ allow/deny cho tất cả leaf có cùng resource + action.
+     */
     public void syncLinkedLeaves(PolicyGroupNode node, boolean allow) {
         String key = buildLeafKey(node);
         if (key == null) {
@@ -718,11 +747,18 @@ public class RoleManagerService {
             applyState(target, allow);
     }
 
+    /**
+     * Cập nhật trạng thái allow/deny cho một leaf.
+     */
     public void applyState(PolicyGroupNode node, boolean allow) {
         node.setEffect(allow ? "ALLOW" : null);
         node.setAllow(allow);
         node.setDeny(!allow);
     }
+
+    /**
+     * Map viewId → danh sách MenuItem chứa view đó.
+     */
     public Map<String, List<MenuItem>> buildViewMenuMap() {
         Map<String, List<MenuItem>> map = new HashMap<>();
         for (MenuItem root : menuConfig.getRootItems()) {
@@ -731,6 +767,9 @@ public class RoleManagerService {
         return map;
     }
 
+    /**
+     * Thu thập toàn bộ menuItem có chứa view vào map.
+     */
     private void collectMenuItems(MenuItem item, Map<String, List<MenuItem>> map) {
         if (item.getView() != null) {
             map.computeIfAbsent(item.getView(), k -> new ArrayList<>()).add(item);
@@ -740,7 +779,5 @@ public class RoleManagerService {
             collectMenuItems(child, map);
         }
     }
-
-
 
 }
