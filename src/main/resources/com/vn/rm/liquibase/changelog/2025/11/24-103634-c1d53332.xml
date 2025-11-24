@@ -1,0 +1,1523 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+        objectQuotingStrategy="QUOTE_ONLY_RESERVED_WORDS">
+    <changeSet id="1" author="rm">
+        <createTable tableName="DB_CQCKHOAN_0026">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DB_CQCKHOAN_0026"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)"/>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="CAPDT" type="INT"/>
+            <column name="COQUAN_TL" type="VARCHAR(255)"/>
+            <column name="MA_CQT" type="VARCHAR(255)"/>
+            <column name="DIACHI" type="VARCHAR(255)"/>
+            <column name="DVDTCD" type="INT"/>
+            <column name="DVDTCT" type="INT"/>
+            <column name="CHUONG" type="VARCHAR(255)"/>
+            <column name="DBN_MA" type="VARCHAR(255)"/>
+            <column name="DVCT_MA" type="VARCHAR(255)"/>
+            <column name="DVQLTT_MA" type="VARCHAR(255)"/>
+            <column name="LOAIDV_MA" type="VARCHAR(255)"/>
+            <column name="LHDV_MA" type="VARCHAR(255)"/>
+            <column name="NGAY_TL" type="DATE"/>
+            <column name="NGAY_DMO" type="DATE"/>
+            <column name="NGAY_SUA" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGUOI_SUA" type="VARCHAR(255)"/>
+            <column name="NGUOI_TAO" type="VARCHAR(255)"/>
+            <column name="CCH_TEN" type="VARCHAR(255)"/>
+            <column name="DBN_TEN" type="VARCHAR(255)"/>
+            <column name="DVCT_TEN" type="VARCHAR(255)"/>
+            <column name="DVQLTT_TEN" type="VARCHAR(255)"/>
+            <column name="LOAIDV_TEN" type="VARCHAR(255)"/>
+            <column name="LHDV_TEN" type="VARCHAR(255)"/>
+            <column name="TRANGTHAI_CU" type="VARCHAR(255)"/>
+            <column name="TRANGTHAI_MA" type="VARCHAR(255)"/>
+            <column name="XOA" type="INT"/>
+            <column name="SOQD_TL" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="2" author="rm">
+        <createTable tableName="DB_CQDTRU_0027">
+            <column name="ID" type="VARCHAR(20)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DB_CQDTRU_0027"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(20)"/>
+            <column name="MA" type="VARCHAR(50)"/>
+            <column name="TEN" type="VARCHAR(512)"/>
+            <column name="MA_CQT" type="VARCHAR(50)"/>
+            <column name="LOAIDV_MA" type="VARCHAR(50)"/>
+            <column name="LOAIDV_TEN" type="VARCHAR(255)"/>
+            <column name="CAPDT" type="VARCHAR(10)"/>
+            <column name="CHUONG" type="VARCHAR(50)"/>
+            <column name="CCH_TEN" type="VARCHAR(255)"/>
+            <column name="LHDV_MA" type="VARCHAR(50)"/>
+            <column name="LHDV_TEN" type="VARCHAR(255)"/>
+            <column name="SOQD_TL" type="VARCHAR(100)"/>
+            <column name="NGAY_TL" type="DATE"/>
+            <column name="COQUAN_TL" type="VARCHAR(255)"/>
+            <column name="DVCT_MA" type="VARCHAR(50)"/>
+            <column name="DVCT_TEN" type="VARCHAR(255)"/>
+            <column name="DVQLTT_MA" type="VARCHAR(50)"/>
+            <column name="DVQLTT_TEN" type="VARCHAR(255)"/>
+            <column name="DBN_MA" type="VARCHAR(50)"/>
+            <column name="DBN_TEN" type="VARCHAR(255)"/>
+            <column name="DIACHI" type="VARCHAR(512)"/>
+            <column name="DVDTCT" type="VARCHAR(5)"/>
+            <column name="DVDTCD" type="VARCHAR(5)"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGUOI_TAO" type="VARCHAR(255)"/>
+            <column name="NGAY_SUA" type="DATE"/>
+            <column name="NGUOI_SUA" type="VARCHAR(255)"/>
+            <column name="TRANGTHAI_MA" type="VARCHAR(10)"/>
+            <column name="TRANGTHAI_CU" type="VARCHAR(10)"/>
+            <column name="NGAY_DMO" type="DATE"/>
+            <column name="TRANGTHAI_DM" type="VARCHAR(10)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="3" author="rm">
+        <createTable tableName="DB_CQHQUAN_0025">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DB_CQHQUAN_0025"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)"/>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="MA_CQT" type="VARCHAR(255)"/>
+            <column name="LOAIDV_MA" type="VARCHAR(255)"/>
+            <column name="LOAIDV_TEN" type="VARCHAR(255)"/>
+            <column name="CAPDT" type="INT"/>
+            <column name="CHUONG" type="VARCHAR(255)"/>
+            <column name="CCH_TEN" type="VARCHAR(255)"/>
+            <column name="LHDV_MA" type="VARCHAR(255)"/>
+            <column name="LHDV_TEN" type="VARCHAR(255)"/>
+            <column name="SOQD_TL" type="VARCHAR(255)"/>
+            <column name="NGAY_TL" type="DATE"/>
+            <column name="COQUAN_TL" type="VARCHAR(255)"/>
+            <column name="DVCT_MA" type="VARCHAR(255)"/>
+            <column name="DVCT_TEN" type="VARCHAR(255)"/>
+            <column name="DVQLTT_MA" type="VARCHAR(255)"/>
+            <column name="DVQLTT_TEN" type="VARCHAR(255)"/>
+            <column name="DBN_MA" type="VARCHAR(255)"/>
+            <column name="DBN_TEN" type="VARCHAR(255)"/>
+            <column name="DIACHI" type="VARCHAR(255)"/>
+            <column name="DVDTCT" type="INT"/>
+            <column name="DVDTCD" type="INT"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGUOI_TAO" type="VARCHAR(255)"/>
+            <column name="NGAY_SUA" type="DATE"/>
+            <column name="NGUOI_SUA" type="VARCHAR(255)"/>
+            <column name="TRANGTHAI_MA" type="VARCHAR(255)"/>
+            <column name="TRANGTHAI_CU" type="VARCHAR(255)"/>
+            <column name="NGAY_DMO" type="DATE"/>
+            <column name="TRANGTHAI_DM" type="INT"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="4" author="rm">
+        <createTable tableName="DB_CQKBAC_0024">
+            <column name="ID" type="VARCHAR(50)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DB_CQKBAC_0024"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(20)"/>
+            <column name="MA" type="VARCHAR(50)"/>
+            <column name="TEN" type="VARCHAR(512)"/>
+            <column name="MA_CQT" type="VARCHAR(50)"/>
+            <column name="LOAIDV_MA" type="VARCHAR(50)"/>
+            <column name="LOAIDV_TEN" type="VARCHAR(255)"/>
+            <column name="CAPDT" type="VARCHAR(10)"/>
+            <column name="CHUONG" type="VARCHAR(50)"/>
+            <column name="CCH_TEN" type="VARCHAR(255)"/>
+            <column name="LHDV_MA" type="VARCHAR(50)"/>
+            <column name="LHDV_TEN" type="VARCHAR(255)"/>
+            <column name="SOQD_TL" type="VARCHAR(100)"/>
+            <column name="NGAY_TL" type="DATE"/>
+            <column name="COQUAN_TL" type="VARCHAR(255)"/>
+            <column name="DVCT_MA" type="VARCHAR(50)"/>
+            <column name="DVCT_TEN" type="VARCHAR(255)"/>
+            <column name="DVQLTT_MA" type="VARCHAR(50)"/>
+            <column name="DVQLTT_TEN" type="VARCHAR(255)"/>
+            <column name="DBN_MA" type="VARCHAR(50)"/>
+            <column name="DBN_TEN" type="VARCHAR(255)"/>
+            <column name="DIACHI" type="VARCHAR(512)"/>
+            <column name="DVDTCT" type="VARCHAR(5)"/>
+            <column name="DVDTCD" type="VARCHAR(5)"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGUOI_TAO" type="VARCHAR(255)"/>
+            <column name="NGAY_SUA" type="DATE"/>
+            <column name="NGUOI_SUA" type="VARCHAR(255)"/>
+            <column name="TRANGTHAI_MA" type="VARCHAR(10)"/>
+            <column name="TRANGTHAI_CU" type="VARCHAR(10)"/>
+            <column name="NGAY_DMO" type="DATE"/>
+            <column name="TRANGTHAI_DM" type="VARCHAR(10)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="5" author="rm">
+        <createTable tableName="DB_CQTCHINH_0022">
+            <column name="ID" type="VARCHAR(50)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DB_CQTCHINH_0022"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(20)"/>
+            <column name="MA" type="VARCHAR(50)"/>
+            <column name="TEN" type="VARCHAR(512)"/>
+            <column name="MA_CQT" type="VARCHAR(50)"/>
+            <column name="LOAIDV_MA" type="VARCHAR(50)"/>
+            <column name="LOAIDV_TEN" type="VARCHAR(255)"/>
+            <column name="CAPDT" type="VARCHAR(10)"/>
+            <column name="CHUONG" type="VARCHAR(50)"/>
+            <column name="CCH_TEN" type="VARCHAR(255)"/>
+            <column name="LHDV_MA" type="VARCHAR(50)"/>
+            <column name="LHDV_TEN" type="VARCHAR(255)"/>
+            <column name="SOQD_TL" type="VARCHAR(100)"/>
+            <column name="NGAY_TL" type="DATE"/>
+            <column name="COQUAN_TL" type="VARCHAR(255)"/>
+            <column name="DVCT_MA" type="VARCHAR(50)"/>
+            <column name="DVCT_TEN" type="VARCHAR(255)"/>
+            <column name="DVQLTT_MA" type="VARCHAR(50)"/>
+            <column name="DVQLTT_TEN" type="VARCHAR(255)"/>
+            <column name="DBN_MA" type="VARCHAR(50)"/>
+            <column name="DBN_TEN" type="VARCHAR(255)"/>
+            <column name="DIACHI" type="VARCHAR(512)"/>
+            <column name="DVDTCT" type="VARCHAR(5)"/>
+            <column name="DVDTCD" type="VARCHAR(5)"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGUOI_TAO" type="VARCHAR(255)"/>
+            <column name="NGAY_SUA" type="DATE"/>
+            <column name="NGUOI_SUA" type="VARCHAR(255)"/>
+            <column name="TRANGTHAI_MA" type="VARCHAR(10)"/>
+            <column name="TRANGTHAI_CU" type="VARCHAR(10)"/>
+            <column name="NGAY_DMO" type="DATE"/>
+            <column name="TRANGTHAI_DM" type="VARCHAR(10)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="6" author="rm">
+        <createTable tableName="DB_CQTHUE_0023">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DB_CQTHUE_0023"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)"/>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="MA_CQT" type="VARCHAR(255)"/>
+            <column name="LOAIDV_MA" type="VARCHAR(255)"/>
+            <column name="LOAIDV_TEN" type="VARCHAR(255)"/>
+            <column name="CAPDT" type="INT"/>
+            <column name="CHUONG" type="VARCHAR(255)"/>
+            <column name="CCH_TEN" type="VARCHAR(255)"/>
+            <column name="LHDV_MA" type="VARCHAR(255)"/>
+            <column name="LHDV_TEN" type="VARCHAR(255)"/>
+            <column name="SOQD_TL" type="VARCHAR(255)"/>
+            <column name="NGAY_TL" type="DATE"/>
+            <column name="COQUAN_TL" type="VARCHAR(255)"/>
+            <column name="DVCT_MA" type="VARCHAR(255)"/>
+            <column name="DVCT_TEN" type="VARCHAR(255)"/>
+            <column name="DVQLTT_MA" type="VARCHAR(255)"/>
+            <column name="DVQLTT_TEN" type="VARCHAR(255)"/>
+            <column name="DBN_MA" type="VARCHAR(255)"/>
+            <column name="DBN_TEN" type="VARCHAR(255)"/>
+            <column name="DIA_CHI" type="VARCHAR(255)"/>
+            <column name="DVDTCT" type="INT"/>
+            <column name="DVDTCD" type="INT"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGUOI_TAO" type="VARCHAR(255)"/>
+            <column name="NGAY_SUA" type="DATE"/>
+            <column name="NGUOI_SUA" type="VARCHAR(255)"/>
+            <column name="TRANGTHAI_MA" type="VARCHAR(255)"/>
+            <column name="TRANGTHAI_CU" type="VARCHAR(255)"/>
+            <column name="NGAY_DMO" type="DATE"/>
+            <column name="TRANGTHAI_DM" type="INT"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="7" author="rm">
+        <createTable tableName="DB_DNHDXNK_0034">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DB_DNHDXNK_0034"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)"/>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="TEN" type="CLOB"/>
+            <column name="GHI_CHU" type="VARCHAR(255)"/>
+            <column name="VALID" type="INT"/>
+            <column name="NGAY_SD" type="DATE"/>
+            <column name="NGAY_HL" type="DATE"/>
+            <column name="NGAY_KT" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGUOI_TAO" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="8" author="rm">
+        <createTable tableName="DB_DVSDNS_0016">
+            <column name="ID" type="VARCHAR(50)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DB_DVSDNS_0016"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(20)"/>
+            <column name="MA" type="VARCHAR(50)"/>
+            <column name="TEN" type="VARCHAR(512)"/>
+            <column name="MA_CQT" type="VARCHAR(50)"/>
+            <column name="LOAIDV_MA" type="VARCHAR(50)"/>
+            <column name="LOAIDV_TEN" type="VARCHAR(255)"/>
+            <column name="CAPDT" type="VARCHAR(10)"/>
+            <column name="CHUONG" type="VARCHAR(50)"/>
+            <column name="CCH_TEN" type="VARCHAR(255)"/>
+            <column name="LHDV_MA" type="VARCHAR(50)"/>
+            <column name="LHDV_TEN" type="VARCHAR(255)"/>
+            <column name="SOQD_TL" type="VARCHAR(100)"/>
+            <column name="NGAY_TL" type="DATE"/>
+            <column name="COQUAN_TL" type="VARCHAR(255)"/>
+            <column name="DVCT_MA" type="VARCHAR(50)"/>
+            <column name="DVCT_TEN" type="VARCHAR(255)"/>
+            <column name="DVQLTT_MA" type="VARCHAR(50)"/>
+            <column name="DVQLTT_TEN" type="VARCHAR(255)"/>
+            <column name="DBN_MA" type="VARCHAR(50)"/>
+            <column name="DBN_TEN" type="VARCHAR(255)"/>
+            <column name="DIA_CHI" type="VARCHAR(512)"/>
+            <column name="DVDTCT" type="VARCHAR(5)"/>
+            <column name="DVDTCD" type="VARCHAR(5)"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGUOI_TAO" type="VARCHAR(255)"/>
+            <column name="NGAY_SUA" type="DATE"/>
+            <column name="NGUOI_SUA" type="VARCHAR(255)"/>
+            <column name="TRANGTHAI_MA" type="VARCHAR(10)"/>
+            <column name="TRANGTHAI_CU" type="VARCHAR(10)"/>
+            <column name="NGAY_DMO" type="DATE"/>
+            <column name="TRANGTHAI_DM" type="VARCHAR(10)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="9" author="rm">
+        <createTable tableName="DB_HHXNK_0033">
+            <column name="ID" type="VARCHAR(20)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DB_HHXNK_0033"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(20)"/>
+            <column name="MA_HS" type="VARCHAR(50)"/>
+            <column name="MO_TA_HH" type="VARCHAR(1024)"/>
+            <column name="MO_TA_HH_TA" type="VARCHAR(1024)"/>
+            <column name="DON_VI" type="VARCHAR(100)"/>
+            <column name="VALID" type="VARCHAR(5)"/>
+            <column name="NGAY_SD" type="DATE"/>
+            <column name="NGAY_HL" type="DATE"/>
+            <column name="NGAY_KT" type="DATE"/>
+            <column name="VAN_BAN_BH" type="TEXT"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGUOI_TAO" type="VARCHAR(100)"/>
+            <column name="NAM_APDUNG" type="VARCHAR(10)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="10" author="rm">
+        <createTable tableName="DB_QGIA_0038">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DB_QGIA_0038"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="GHICHU" type="VARCHAR(255)"/>
+            <column name="HIEU_LUC" type="INT"/>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="MA_HQ" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_HL" type="DATE"/>
+            <column name="NGAY_KT" type="DATE"/>
+            <column name="NGAY_SD" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="TEN_TA" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="11" author="rm">
+        <createTable tableName="DB_TIENTE_0039">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DB_TIENTE_0039"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="GHICHU" type="VARCHAR(255)"/>
+            <column name="HIEU_LUC" type="INT"/>
+            <column name="MA_DANG_SO" type="VARCHAR(255)"/>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_HL" type="DATE"/>
+            <column name="NGAY_KT" type="DATE"/>
+            <column name="NGAY_SD" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="TEN_QG" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="TEN_TA" type="VARCHAR(255)"/>
+            <column name="TYGIA" type="DECIMAL"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="12" author="rm">
+        <createTable tableName="DM_BIEU_THUE_FTA_0086">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_BIEU_THUE_FTA_0086"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="THUE_SUAT" type="DECIMAL(19, 6)"/>
+            <column name="NAM_APDUNG" type="INT"/>
+            <column name="VALID" type="INT"/>
+            <column name="NGAY_HL" type="DATE"/>
+            <column name="NGAY_KT" type="DATE"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGUOI_TAO" type="VARCHAR(255)"/>
+            <column name="MA_BIEU_THUE" type="VARCHAR(255)"/>
+            <column name="TEN_BIEU_THUE" type="VARCHAR(255)"/>
+            <column name="GHI_CHU" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="13" author="rm">
+        <createTable tableName="DM_BMDD_0030">
+            <column name="ID" type="VARCHAR(50)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_BMDD_0030"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(50)"/>
+            <column name="DIA_CHI" type="VARCHAR(255)"/>
+            <column name="MA_CHA" type="VARCHAR(50)"/>
+            <column name="MA_DH" type="VARCHAR(50)"/>
+            <column name="CAP" type="VARCHAR(10)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_HL" type="DATE"/>
+            <column name="NGAY_KT" type="DATE"/>
+            <column name="NGAY_SD" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="TEN_DONVI" type="VARCHAR(255)"/>
+            <column name="HIEU_LUC" type="VARCHAR(5)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="14" author="rm">
+        <createTable tableName="DM_BONGANH_0028">
+            <column name="IDBANGHI" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_BONGANH_0028"/>
+            </column>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(512)"/>
+            <column name="MA_CQT" type="VARCHAR(50)"/>
+            <column name="LOAIDV_MA" type="VARCHAR(10)"/>
+            <column name="LOAIDV_TEN" type="VARCHAR(255)"/>
+            <column name="CAPDT" type="INT"/>
+            <column name="CHUONG" type="VARCHAR(10)"/>
+            <column name="CCH_TEN" type="VARCHAR(255)"/>
+            <column name="LHDV_MA" type="VARCHAR(10)"/>
+            <column name="LHDV_TEN" type="VARCHAR(255)"/>
+            <column name="SOQD_TL" type="VARCHAR(128)"/>
+            <column name="NGAY_TL" type="DATE"/>
+            <column name="COQUAN_TL" type="VARCHAR(255)"/>
+            <column name="DVCT_MA" type="BIGINT"/>
+            <column name="DVCT_TEN" type="VARCHAR(255)"/>
+            <column name="DVQLTT_MA" type="BIGINT"/>
+            <column name="DVQLTT_TEN" type="VARCHAR(255)"/>
+            <column name="DBN_MA" type="VARCHAR(20)"/>
+            <column name="DBN_TEN" type="VARCHAR(255)"/>
+            <column name="DIACHI" type="VARCHAR(512)"/>
+            <column name="DVDTCT" type="INT"/>
+            <column name="DVDTCD" type="INT"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGUOI_TAO" type="VARCHAR(100)"/>
+            <column name="NGAY_SUA" type="DATE"/>
+            <column name="NGUOI_SUA" type="VARCHAR(100)"/>
+            <column name="TRANGTHAI_MA" type="VARCHAR(10)"/>
+            <column name="TRANGTHAI_CU" type="VARCHAR(10)"/>
+            <column name="NGAY_DMO" type="DATE"/>
+            <column name="ID" type="BIGINT"/>
+            <column name="TRANGTHAI_DM" type="INT"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="15" author="rm">
+        <createTable tableName="DM_CAPNS_0006">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_CAPNS_0006"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="TINHTRANG" type="INT"/>
+            <column name="GHI_CHU" type="VARCHAR(255)"/>
+            <column name="START_DATE_ACTIVE" type="DATE"/>
+            <column name="END_DATE_ACTIVE" type="DATE"/>
+            <column name="CREATION_DATE" type="DATE"/>
+            <column name="CREATED_BY" type="VARCHAR(255)"/>
+            <column name="LAST_UPDATE_DATE" type="DATE"/>
+            <column name="LAST_UPDATED_BY" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="MA_CU" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="16" author="rm">
+        <createTable tableName="DM_CDTU_0019">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_CDTU_0019"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="MA_CQT" type="VARCHAR(255)"/>
+            <column name="LOAIDV_MA" type="VARCHAR(255)"/>
+            <column name="LOAIDV_TEN" type="VARCHAR(255)"/>
+            <column name="CAPDT" type="INT"/>
+            <column name="CHUONG" type="VARCHAR(255)"/>
+            <column name="CCH_TEN" type="VARCHAR(255)"/>
+            <column name="LHDV_MA" type="VARCHAR(255)"/>
+            <column name="LHDV_TEN" type="VARCHAR(255)"/>
+            <column name="SOQD_TL" type="VARCHAR(255)"/>
+            <column name="NGAY_TL" type="DATE"/>
+            <column name="COQUAN_TL" type="VARCHAR(255)"/>
+            <column name="DVCT_MA" type="VARCHAR(255)"/>
+            <column name="DVCT_TEN" type="VARCHAR(255)"/>
+            <column name="DVQLTT_MA" type="VARCHAR(255)"/>
+            <column name="DVQLTT_TEN" type="VARCHAR(255)"/>
+            <column name="DBN_MA" type="VARCHAR(255)"/>
+            <column name="DBN_TEN" type="VARCHAR(255)"/>
+            <column name="DIACHI" type="VARCHAR(255)"/>
+            <column name="DVDTCT" type="INT"/>
+            <column name="DVDTCD" type="INT"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGUOI_TAO" type="VARCHAR(255)"/>
+            <column name="NGAY_SUA" type="DATE"/>
+            <column name="NGUOI_SUA" type="VARCHAR(255)"/>
+            <column name="TRANGTHAI_MA" type="VARCHAR(255)"/>
+            <column name="TRANGTHAI_CU" type="VARCHAR(255)"/>
+            <column name="NGAY_DMO" type="DATE"/>
+            <column name="TRANGTHAI_DM" type="INT"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="17" author="rm">
+        <createTable tableName="DM_CHUONG_0001">
+            <column name="ID" type="VARCHAR(20)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_CHUONG_0001"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(20)"/>
+            <column name="MA" type="VARCHAR(50)"/>
+            <column name="TEN" type="VARCHAR(512)"/>
+            <column name="TINHTRANG" type="VARCHAR(10)"/>
+            <column name="CAP" type="VARCHAR(10)"/>
+            <column name="GHI_CHU" type="VARCHAR(512)"/>
+            <column name="START_DATE_ACTIVE" type="DATE"/>
+            <column name="END_DATE_ACTIVE" type="DATE"/>
+            <column name="CREATION_DATE" type="DATE"/>
+            <column name="CREATED_BY" type="VARCHAR(100)"/>
+            <column name="LAST_UPDATE_DATE" type="DATE"/>
+            <column name="LAST_UPDATED_BY" type="VARCHAR(100)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="MA_CU" type="VARCHAR(50)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="18" author="rm">
+        <createTable tableName="DM_CMT_0004">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_CMT_0004"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="TINHTRANG" type="INT"/>
+            <column name="GHI_CHU" type="VARCHAR(255)"/>
+            <column name="ID_CHA" type="VARCHAR(255)"/>
+            <column name="MA_CHA" type="VARCHAR(255)"/>
+            <column name="LOAI_KHOAN" type="INT"/>
+            <column name="LOAI" type="INT"/>
+            <column name="MA_TINH" type="VARCHAR(255)"/>
+            <column name="START_DATE_ACTIVE" type="DATE"/>
+            <column name="END_DATE_ACTIVE" type="DATE"/>
+            <column name="CREATION_DATE" type="DATE"/>
+            <column name="CREATED_BY" type="VARCHAR(255)"/>
+            <column name="LAST_UPDATE_DATE" type="DATE"/>
+            <column name="LAST_UPDATED_BY" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="MA_CU" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="19" author="rm">
+        <createTable tableName="DM_COQUAN_BHXH_0085">
+            <column name="IDBANGHI" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_COQUAN_BHXH_0085"/>
+            </column>
+            <column name="ID_BHXH" type="VARCHAR(255)"/>
+            <column name="MA_DVI" type="VARCHAR(20)"/>
+            <column name="TEN_DVI" type="VARCHAR(255)"/>
+            <column name="MA_CHA" type="VARCHAR(20)"/>
+            <column name="DIA_CHI" type="VARCHAR(255)"/>
+            <column name="EMAIL" type="VARCHAR(255)"/>
+            <column name="TAI_KHOAN" type="VARCHAR(100)"/>
+            <column name="KY_HIEU_THU" type="VARCHAR(20)"/>
+            <column name="DM_DBHC_ID" type="VARCHAR(20)"/>
+            <column name="TEN_TAT" type="VARCHAR(100)"/>
+            <column name="TYPE" type="VARCHAR(10)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="HIEU_LUC" type="VARCHAR(10)"/>
+            <column name="NGAY_HL" type="DATE"/>
+            <column name="NGAY_KT" type="DATE"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="20" author="rm">
+        <createTable tableName="DM_CQTHU_0020">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_CQTHU_0020"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="MA_CQT" type="VARCHAR(255)"/>
+            <column name="LOAIDV_MA" type="VARCHAR(255)"/>
+            <column name="LOAIDV_TEN" type="VARCHAR(255)"/>
+            <column name="CAPDT" type="INT"/>
+            <column name="CHUONG" type="VARCHAR(255)"/>
+            <column name="CCH_TEN" type="VARCHAR(255)"/>
+            <column name="LHDV_MA" type="VARCHAR(255)"/>
+            <column name="LHDV_TEN" type="VARCHAR(255)"/>
+            <column name="SOQD_TL" type="VARCHAR(255)"/>
+            <column name="NGAY_TL" type="DATE"/>
+            <column name="COQUAN_TL" type="VARCHAR(255)"/>
+            <column name="DVCT_MA" type="VARCHAR(255)"/>
+            <column name="DVCT_TEN" type="VARCHAR(255)"/>
+            <column name="DVQLTT_MA" type="VARCHAR(255)"/>
+            <column name="DVQLTT_TEN" type="VARCHAR(255)"/>
+            <column name="DBN_MA" type="VARCHAR(255)"/>
+            <column name="DBN_TEN" type="VARCHAR(255)"/>
+            <column name="DIACHI" type="VARCHAR(255)"/>
+            <column name="DVDTCT" type="INT"/>
+            <column name="DVDTCD" type="INT"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGUOI_TAO" type="VARCHAR(255)"/>
+            <column name="NGAY_SUA" type="DATE"/>
+            <column name="NGUOI_SUA" type="VARCHAR(255)"/>
+            <column name="NGAY_DMO" type="DATE"/>
+            <column name="TRANGTHAI_MA" type="VARCHAR(255)"/>
+            <column name="TRANGTHAI_CU" type="VARCHAR(255)"/>
+            <column name="TRANGTHAI_DM" type="INT"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="21" author="rm">
+        <createTable tableName="DM_CTCKHOAN_0035">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_CTCKHOAN_0035"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="TEN_CONG_TY" type="VARCHAR(255)"/>
+            <column name="TEN_TIENG_ANH" type="VARCHAR(255)"/>
+            <column name="TEN_VIET_TAT" type="VARCHAR(255)"/>
+            <column name="SO_GPKD" type="VARCHAR(255)"/>
+            <column name="NGAY_CAP_GPKD" type="DATE"/>
+            <column name="NOI_CAP_GPKD" type="VARCHAR(255)"/>
+            <column name="DIA_CHI" type="VARCHAR(255)"/>
+            <column name="DM_PHUONG_XA_ID" type="VARCHAR(255)"/>
+            <column name="DM_QUAN_HUYEN_ID" type="VARCHAR(255)"/>
+            <column name="DM_TINH_THANH_ID" type="VARCHAR(255)"/>
+            <column name="DIEN_THOAI" type="VARCHAR(255)"/>
+            <column name="FAX" type="VARCHAR(255)"/>
+            <column name="EMAIL" type="VARCHAR(255)"/>
+            <column name="WEBSITE" type="VARCHAR(255)"/>
+            <column name="VON_DIEU_LE" type="DECIMAL(19, 2)"/>
+            <column name="NGUOI_DAI_DIEN_PL" type="VARCHAR(255)"/>
+            <column name="TONG_GIAM_DOC" type="VARCHAR(255)"/>
+            <column name="CAN_BO_CBTT" type="VARCHAR(255)"/>
+            <column name="EMAIL_CBTT" type="VARCHAR(255)"/>
+            <column name="NIEM_YET" type="INT"/>
+            <column name="NGAY_NIEM_YET" type="DATE"/>
+            <column name="THI_TRUONG" type="VARCHAR(255)"/>
+            <column name="MA_CHUNG_KHOAN" type="VARCHAR(255)"/>
+            <column name="DAI_CHUNG" type="INT"/>
+            <column name="NGAY_DK_DAI_CHUNG" type="DATE"/>
+            <column name="NGAY_CHAM_DUT_DAI_CHUNG" type="DATE"/>
+            <column name="TRANG_THAI" type="INT"/>
+            <column name="LOAI_HINH_DN" type="VARCHAR(255)"/>
+            <column name="NGHIEP_VU_KD" type="VARCHAR(255)"/>
+            <column name="NGAY_CAP_NHAT" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGUOI_TAO" type="VARCHAR(255)"/>
+            <column name="NGAY_HL" type="DATE"/>
+            <column name="NGAY_KT" type="DATE"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="22" author="rm">
+        <createTable tableName="DM_CTQLQ_0036">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_CTQLQ_0036"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="TEN_TA" type="VARCHAR(255)"/>
+            <column name="TEN_VIET_TAT" type="VARCHAR(255)"/>
+            <column name="DIA_CHI_CTY" type="VARCHAR(255)"/>
+            <column name="SDT" type="VARCHAR(255)"/>
+            <column name="EMAIL" type="VARCHAR(255)"/>
+            <column name="SO_FAX" type="VARCHAR(255)"/>
+            <column name="LOAI_HINH_DN" type="VARCHAR(255)"/>
+            <column name="MA_HUYEN" type="VARCHAR(255)"/>
+            <column name="MA_TINH" type="VARCHAR(255)"/>
+            <column name="MA_XA" type="VARCHAR(255)"/>
+            <column name="MENH_GIA_1CP" type="DECIMAL(19, 2)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_CAP_GPKD" type="DATE"/>
+            <column name="START_DATE_ACTIVE" type="DATE"/>
+            <column name="END_DATE_ACTIVE" type="DATE"/>
+            <column name="LAST_UPDATE_DATE" type="DATE"/>
+            <column name="CREATION_DATE" type="DATE"/>
+            <column name="NGHIEP_VU" type="VARCHAR(255)"/>
+            <column name="NGUOI_DAI_DIEN" type="VARCHAR(255)"/>
+            <column name="CREATED_BY" type="VARCHAR(255)"/>
+            <column name="NOI_CAP_GPKD" type="VARCHAR(255)"/>
+            <column name="SO_GPKD" type="VARCHAR(255)"/>
+            <column name="SO_GPKD_DC" type="VARCHAR(255)"/>
+            <column name="TGD" type="VARCHAR(255)"/>
+            <column name="TONG_SO_CP" type="BIGINT"/>
+            <column name="TINHTRANG" type="INT"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+            <column name="VON_DIEULE" type="DECIMAL(19, 2)"/>
+            <column name="WEBSITE" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="23" author="rm">
+        <createTable tableName="DM_CTYKETOAN_0042">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_CTYKETOAN_0042"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DIA_CHI" type="VARCHAR(255)"/>
+            <column name="GHI_CHU" type="VARCHAR(255)"/>
+            <column name="HIEU_LUC" type="INT"/>
+            <column name="LOAI" type="VARCHAR(255)"/>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="ID_CHA" type="VARCHAR(255)"/>
+            <column name="MA_CHA" type="VARCHAR(255)"/>
+            <column name="MASOTHUE" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_HL" type="DATE"/>
+            <column name="NGAY_KT" type="DATE"/>
+            <column name="NGAY_SD" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGAY_THANHLAP" type="DATE"/>
+            <column name="SO_HIEU" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="TEN_VTAT" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="24" author="rm">
+        <createTable tableName="DM_CTYKIEMTOAN_0040">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_CTYKIEMTOAN_0040"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DIA_CHI" type="VARCHAR(255)"/>
+            <column name="GHI_CHU" type="VARCHAR(255)"/>
+            <column name="HIEU_LUC" type="INT"/>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="ID_CHA" type="VARCHAR(255)"/>
+            <column name="MA_CHA" type="VARCHAR(255)"/>
+            <column name="MASOTHUE" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_HL" type="DATE"/>
+            <column name="NGAY_KT" type="DATE"/>
+            <column name="NGAY_SD" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="TEN_VTAT" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="25" author="rm">
+        <createTable tableName="DM_CTY_NN_0048">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_CTY_NN_0048"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DIA_CHI" type="VARCHAR(255)"/>
+            <column name="GHI_CHU" type="VARCHAR(255)"/>
+            <column name="HIEU_LUC" type="INT"/>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="ID_CHA" type="VARCHAR(255)"/>
+            <column name="MA_CHA" type="VARCHAR(255)"/>
+            <column name="MASOTHUE" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_HL" type="DATE"/>
+            <column name="NGAY_KT" type="DATE"/>
+            <column name="NGAY_SD" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="TEN_VTAT" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="26" author="rm">
+        <createTable tableName="DM_DADT_0017">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_DADT_0017"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)"/>
+            <column name="MA" type="CLOB"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="MA_CHA" type="VARCHAR(255)"/>
+            <column name="CQTC_MA" type="VARCHAR(255)"/>
+            <column name="DVQLTT_MA" type="VARCHAR(255)"/>
+            <column name="DVQLTT_TEN" type="VARCHAR(255)"/>
+            <column name="CDT_MA" type="VARCHAR(255)"/>
+            <column name="CDT_TEN" type="VARCHAR(255)"/>
+            <column name="BQL_MA" type="VARCHAR(255)"/>
+            <column name="BQL_TEN" type="VARCHAR(255)"/>
+            <column name="SOQD_TL" type="CLOB"/>
+            <column name="NGAY_TL" type="DATE"/>
+            <column name="COQUAN_TL" type="VARCHAR(255)"/>
+            <column name="LOAIDA_MA" type="VARCHAR(255)"/>
+            <column name="LOAIDA_TEN" type="VARCHAR(255)"/>
+            <column name="NHOMDA_MA" type="VARCHAR(255)"/>
+            <column name="NHOMDA_TEN" type="VARCHAR(255)"/>
+            <column name="CTMT_MA" type="VARCHAR(255)"/>
+            <column name="CTMT_TEN" type="VARCHAR(255)"/>
+            <column name="HTDA_MA" type="VARCHAR(255)"/>
+            <column name="HTDA_TEN" type="VARCHAR(255)"/>
+            <column name="HTQL_MA" type="VARCHAR(255)"/>
+            <column name="HTQL_TEN" type="VARCHAR(255)"/>
+            <column name="NGAY_TAO" type="DATETIME"/>
+            <column name="NGUOI_TAO" type="VARCHAR(255)"/>
+            <column name="NGAY_SUA" type="DATETIME"/>
+            <column name="NGUOI_SUA" type="VARCHAR(255)"/>
+            <column name="LY_DO_SUA" type="VARCHAR(255)"/>
+            <column name="TRANGTHAI_MA" type="VARCHAR(255)"/>
+            <column name="TRANGTHAI_CU" type="VARCHAR(255)"/>
+            <column name="NGAY_DMO" type="DATE"/>
+            <column name="TRANGTHAI_DM" type="INT"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="27" author="rm">
+        <createTable tableName="DM_DBHC_0049">
+            <column name="ID" type="VARCHAR(20)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_DBHC_0049"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(20)"/>
+            <column name="LOAI" type="VARCHAR(10)"/>
+            <column name="ID_CHA" type="VARCHAR(20)"/>
+            <column name="MA_CHA" type="VARCHAR(50)"/>
+            <column name="HIEU_LUC" type="VARCHAR(5)"/>
+            <column name="MA_CU" type="VARCHAR(255)"/>
+            <column name="MA_DB" type="VARCHAR(50)"/>
+            <column name="MA_H" type="VARCHAR(50)"/>
+            <column name="MA_THAMCHIEU" type="VARCHAR(50)"/>
+            <column name="MA_T" type="VARCHAR(50)"/>
+            <column name="MA_V" type="VARCHAR(50)"/>
+            <column name="MA_X" type="VARCHAR(50)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_HL" type="DATE"/>
+            <column name="NGAY_KT" type="DATE"/>
+            <column name="NGAY_SD" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="MA" type="VARCHAR(50)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="TEXT"/>
+            <column name="LY_DO" type="TEXT"/>
+            <column name="LOAI_HINH" type="VARCHAR(100)"/>
+            <column name="LOAI_DOTHI" type="VARCHAR(100)"/>
+            <column name="VUNG" type="VARCHAR(100)"/>
+            <column name="TTHI_NTHON" type="VARCHAR(100)"/>
+            <column name="KHUVUC" type="VARCHAR(100)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="28" author="rm">
+        <createTable tableName="DM_DN_THAMDINHGIA_0044">
+            <column name="ID" type="VARCHAR(20)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_DN_THAMDINHGIA_0044"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)"/>
+            <column name="DIA_CHI" type="VARCHAR(512)"/>
+            <column name="GHI_CHU" type="VARCHAR(512)"/>
+            <column name="HIEU_LUC" type="VARCHAR(5)"/>
+            <column name="MA" type="VARCHAR(20)"/>
+            <column name="ID_CHA" type="VARCHAR(20)"/>
+            <column name="MA_CHA" type="VARCHAR(20)"/>
+            <column name="MASOTHUE" type="VARCHAR(50)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_HL" type="DATE"/>
+            <column name="NGAY_KT" type="DATE"/>
+            <column name="NGAY_SD" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="TEN" type="VARCHAR(512)"/>
+            <column name="TEN_VTAT" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="TEXT"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="29" author="rm">
+        <createTable tableName="DM_DOANH_NGHIEP_FDI_0087">
+            <column name="ID" type="VARCHAR(30)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_DOANH_NGHIEP_FDI_0087"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(30)"/>
+            <column name="MST" type="VARCHAR(50)"/>
+            <column name="TEN_NNT" type="VARCHAR(512)"/>
+            <column name="TEN_CQT_QLY" type="VARCHAR(512)"/>
+            <column name="TEN_LOAI_NNT" type="VARCHAR(255)"/>
+            <column name="TRANG_THAI" type="VARCHAR(10)"/>
+            <column name="TEN_TRANG_THAI" type="VARCHAR(255)"/>
+            <column name="NGAY_HLUC_TU" type="DATE"/>
+            <column name="NGAY_HLUC_DEN" type="DATE"/>
+            <column name="NNKD" type="TEXT"/>
+            <column name="TEN_CHU_DN" type="VARCHAR(255)"/>
+            <column name="CHUC_VU" type="VARCHAR(255)"/>
+            <column name="NGAY_CAP_MST" type="DATE"/>
+            <column name="VON_DLE_VN" type="VARCHAR(255)"/>
+            <column name="VON_DLE_NN" type="VARCHAR(255)"/>
+            <column name="LOAI_VON_DLE_VN" type="VARCHAR(50)"/>
+            <column name="LOAI_VON_DLE_NN" type="VARCHAR(50)"/>
+            <column name="DKT_GT_QUOC_GIA" type="VARCHAR(50)"/>
+            <column name="DKT_GT_MA_TINH" type="VARCHAR(50)"/>
+            <column name="DKT_GT_NGAY_CAP" type="DATE"/>
+            <column name="DKT_GT_LOAI" type="VARCHAR(50)"/>
+            <column name="DKT_GT_LOAI_GIAYTO" type="VARCHAR(255)"/>
+            <column name="DKT_GT_SO_GIAY_TO" type="VARCHAR(255)"/>
+            <column name="DKT_GT_NOI_CAP" type="VARCHAR(255)"/>
+            <column name="DKT_DC_MA_HUYEN" type="VARCHAR(50)"/>
+            <column name="DKT_DC_QUAN_HUYEN" type="VARCHAR(255)"/>
+            <column name="DKT_DC_QUOC_GIA" type="VARCHAR(50)"/>
+            <column name="DKT_DC_TINH_TP" type="VARCHAR(255)"/>
+            <column name="DKT_DC_MA_TINH" type="VARCHAR(50)"/>
+            <column name="DKT_DC_LOAI" type="VARCHAR(50)"/>
+            <column name="DKT_DC_DIA_CHI" type="TEXT"/>
+            <column name="DKT_DC_MA_XA" type="VARCHAR(50)"/>
+            <column name="DKT_DC_DIEN_THOAI" type="VARCHAR(100)"/>
+            <column name="DKT_DC_PHUONG_XA" type="VARCHAR(255)"/>
+            <column name="DKT_DC_EMAIL" type="VARCHAR(255)"/>
+            <column name="DKT_DC_LOAI_DIA_CHI" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="30" author="rm">
+        <createTable tableName="DM_DUPHONG_0009">
+            <column name="ID" type="VARCHAR(20)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_DUPHONG_0009"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(20)"/>
+            <column name="MA" type="VARCHAR(50)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="TINHTRANG" type="VARCHAR(10)"/>
+            <column name="GHI_CHU" type="VARCHAR(512)"/>
+            <column name="START_DATE_ACTIVE" type="DATE"/>
+            <column name="END_DATE_ACTIVE" type="DATE"/>
+            <column name="CREATION_DATE" type="DATE"/>
+            <column name="CREATED_BY" type="VARCHAR(100)"/>
+            <column name="LAST_UPDATE_DATE" type="DATE"/>
+            <column name="LAST_UPDATED_BY" type="VARCHAR(100)"/>
+            <column name="VAN_BAN_BH" type="TEXT"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="MA_CU" type="VARCHAR(50)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="31" author="rm">
+        <createTable tableName="DM_HDTQG_0037">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_HDTQG_0037"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="MA_HANG" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="HL_TU" type="DATE"/>
+            <column name="HL_DEN" type="DATE"/>
+            <column name="NGAY_SD" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGUOI_TAO" type="VARCHAR(255)"/>
+            <column name="TEN_HANG" type="VARCHAR(255)"/>
+            <column name="VALID" type="INT"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+            <column name="TCVN" type="VARCHAR(255)"/>
+            <column name="QCVN" type="VARCHAR(255)"/>
+            <column name="MA_NHOM" type="VARCHAR(255)"/>
+            <column name="CAP" type="INT"/>
+            <column name="MA_DONVI_QL" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="32" author="rm">
+        <createTable tableName="DM_KCX_KCN_0088">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_KCX_KCN_0088"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)"/>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="HIEU_LUC" type="INT"/>
+            <column name="NGAY_KT" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGAY_SD" type="DATE"/>
+            <column name="MOTA_DIACHI" type="VARCHAR(255)"/>
+            <column name="NGAY_HL" type="DATE"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="33" author="rm">
+        <createTable tableName="DM_KETOANVIEN_0043">
+            <column name="ID" type="VARCHAR(20)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_KETOANVIEN_0043"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(50)"/>
+            <column name="CHUC_VU" type="VARCHAR(255)"/>
+            <column name="GHI_CHU" type="VARCHAR(512)"/>
+            <column name="GIOI_TINH" type="VARCHAR(5)"/>
+            <column name="HIEU_LUC" type="VARCHAR(5)"/>
+            <column name="BAN_THOIGIAN" type="VARCHAR(10)"/>
+            <column name="MA" type="VARCHAR(50)"/>
+            <column name="ID_CTY" type="VARCHAR(50)"/>
+            <column name="MA_CTY" type="VARCHAR(50)"/>
+            <column name="NAM_SINH" type="VARCHAR(10)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_HL" type="DATE"/>
+            <column name="NGAY_KT" type="DATE"/>
+            <column name="NGAY_PS" type="DATE"/>
+            <column name="NGAY_SD" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="QUE_QUAN" type="VARCHAR(255)"/>
+            <column name="SO_THE" type="VARCHAR(50)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+            <column name="NGAY_CAP" type="DATE"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="34" author="rm">
+        <createTable tableName="DM_KETOANVIEN_0046">
+            <column name="ID" type="VARCHAR(20)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_KETOANVIEN_0046"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(20)"/>
+            <column name="MA" type="VARCHAR(50)"/>
+            <column name="ID_CHA" type="VARCHAR(20)"/>
+            <column name="DIA_CHI" type="VARCHAR(512)"/>
+            <column name="GHI_CHU" type="VARCHAR(512)"/>
+            <column name="HIEU_LUC" type="VARCHAR(5)"/>
+            <column name="MA_CHA" type="VARCHAR(50)"/>
+            <column name="MASOTHUE" type="VARCHAR(50)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_HL" type="DATE"/>
+            <column name="NGAY_KT" type="DATE"/>
+            <column name="NGAY_SD" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="TEN" type="VARCHAR(512)"/>
+            <column name="TEN_VTAT" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="TEXT"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="35" author="rm">
+        <createTable tableName="DM_KIEMTOANVIEN_0041">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_KIEMTOANVIEN_0041"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="CHUC_VU" type="VARCHAR(255)"/>
+            <column name="GHI_CHU" type="VARCHAR(255)"/>
+            <column name="GIOI_TINH" type="INT"/>
+            <column name="HIEU_LUC" type="INT"/>
+            <column name="BAN_THOIGIAN" type="INT"/>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="ID_CTY" type="VARCHAR(255)"/>
+            <column name="MA_CTY" type="VARCHAR(255)"/>
+            <column name="NAM_SINH" type="INT"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_CAP" type="DATE"/>
+            <column name="NGAY_HL" type="DATE"/>
+            <column name="NGAY_KT" type="DATE"/>
+            <column name="NGAY_PS" type="DATE"/>
+            <column name="NGAY_SD" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="QUE_QUAN" type="VARCHAR(255)"/>
+            <column name="SO_THE" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="36" author="rm">
+        <createTable tableName="DM_LHDN_0031">
+            <column name="IDBANGHI" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_LHDN_0031"/>
+            </column>
+            <column name="MA_LHKT" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="TEN_LHKT" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_SUA" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGAY_HL_TU" type="DATE"/>
+            <column name="NGAY_HL_DEN" type="DATE"/>
+            <column name="PBAN" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="37" author="rm">
+        <createTable tableName="DM_LOAI_BHIEM_0056">
+            <column name="IDBANGHI" type="VARCHAR(20)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_LOAI_BHIEM_0056"/>
+            </column>
+            <column name="MALOAIHINHBH" type="VARCHAR(20)"/>
+            <column name="TENLOAIHINHBH" type="VARCHAR(255)"/>
+            <column name="TENVIETTAT" type="VARCHAR(100)"/>
+            <column name="VAN_BAN_BH" type="TEXT"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_HL" type="DATE"/>
+            <column name="NGAY_KT" type="DATE"/>
+            <column name="HIEU_LUC" type="VARCHAR(5)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="38" author="rm">
+        <createTable tableName="DM_MATCNS_0021">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_MATCNS_0021"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)"/>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="MA_CQT" type="VARCHAR(255)"/>
+            <column name="LOAIDV_MA" type="VARCHAR(255)"/>
+            <column name="LOAIDV_TEN" type="VARCHAR(255)"/>
+            <column name="CAPDT" type="INT"/>
+            <column name="CHUONG" type="VARCHAR(255)"/>
+            <column name="CCH_TEN" type="VARCHAR(255)"/>
+            <column name="LHDV_MA" type="VARCHAR(255)"/>
+            <column name="LHDV_TEN" type="VARCHAR(255)"/>
+            <column name="SOQD_TL" type="VARCHAR(255)"/>
+            <column name="NGAY_TL" type="DATE"/>
+            <column name="COQUAN_TL" type="VARCHAR(255)"/>
+            <column name="DVCT_MA" type="VARCHAR(255)"/>
+            <column name="DVCT_TEN" type="VARCHAR(255)"/>
+            <column name="DVQLTT_MA" type="VARCHAR(255)"/>
+            <column name="DVQLTT_TEN" type="VARCHAR(255)"/>
+            <column name="DBN_MA" type="VARCHAR(255)"/>
+            <column name="DBN_TEN" type="VARCHAR(255)"/>
+            <column name="DIACHI" type="VARCHAR(255)"/>
+            <column name="DVDTCT" type="INT"/>
+            <column name="DVDTCD" type="INT"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGUOI_TAO" type="VARCHAR(255)"/>
+            <column name="NGAY_SUA" type="DATE"/>
+            <column name="NGUOI_SUA" type="VARCHAR(255)"/>
+            <column name="TRANGTHAI_MA" type="VARCHAR(255)"/>
+            <column name="TRANGTHAI_CU" type="VARCHAR(255)"/>
+            <column name="NGAY_DMO" type="DATE"/>
+            <column name="TRANGTHAI_DM" type="INT"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="39" author="rm">
+        <createTable tableName="DM_MA_KBAC_NN_0008">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_MA_KBAC_NN_0008"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)"/>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="GHI_CHU" type="VARCHAR(255)"/>
+            <column name="TINHTRANG" type="INT"/>
+            <column name="MA_CHA" type="VARCHAR(255)"/>
+            <column name="ID_CHA" type="VARCHAR(255)"/>
+            <column name="LOAI" type="INT"/>
+            <column name="MA_T" type="VARCHAR(255)"/>
+            <column name="MA_H" type="VARCHAR(255)"/>
+            <column name="CAP" type="INT"/>
+            <column name="START_DATE_ACTIVE" type="DATE"/>
+            <column name="END_DATE_ACTIVE" type="DATE"/>
+            <column name="CREATION_DATE" type="DATE"/>
+            <column name="CREATED_BY" type="VARCHAR(255)"/>
+            <column name="LAST_UPDATE_DATE" type="DATE"/>
+            <column name="LAST_UPDATED_BY" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="MA_CU" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="40" author="rm">
+        <createTable tableName="DM_NDKT_0003">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_NDKT_0003"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="TEN" type="CLOB"/>
+            <column name="ID_CHA" type="VARCHAR(255)"/>
+            <column name="MA_CHA" type="VARCHAR(255)"/>
+            <column name="ID_NHOM" type="VARCHAR(255)"/>
+            <column name="MA_NHOM" type="VARCHAR(255)"/>
+            <column name="ID_TNHOM" type="VARCHAR(255)"/>
+            <column name="MA_TNHOM" type="VARCHAR(255)"/>
+            <column name="TINH_TRANG" type="INT"/>
+            <column name="MA_MUC" type="VARCHAR(255)"/>
+            <column name="MA_TMUC" type="VARCHAR(255)"/>
+            <column name="START_DATE_ACTIVE" type="DATE"/>
+            <column name="END_DATE_ACTIVE" type="DATE"/>
+            <column name="CREATION_DATE" type="DATE"/>
+            <column name="CREATED_BY" type="VARCHAR(255)"/>
+            <column name="LAST_UPDATE_DATE" type="DATE"/>
+            <column name="LAST_UPDATED_BY" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="MA_CU" type="CLOB"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="41" author="rm">
+        <createTable tableName="DM_NGANHKTQD_0050">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_NGANHKTQD_0050"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)"/>
+            <column name="CAP1" type="VARCHAR(255)"/>
+            <column name="CAP2" type="VARCHAR(255)"/>
+            <column name="CAP3" type="VARCHAR(255)"/>
+            <column name="CAP4" type="VARCHAR(255)"/>
+            <column name="CAP5" type="VARCHAR(255)"/>
+            <column name="GHI_CHU" type="VARCHAR(255)"/>
+            <column name="HIEU_LUC" type="INT"/>
+            <column name="STT" type="INT"/>
+            <column name="LOAI" type="VARCHAR(255)"/>
+            <column name="ID_CHA" type="VARCHAR(255)"/>
+            <column name="MA_CHA" type="VARCHAR(255)"/>
+            <column name="MA_GFS" type="VARCHAR(255)"/>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="MA_THAM_CHIEU" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_HL" type="DATE"/>
+            <column name="NGAY_KT" type="DATE"/>
+            <column name="NGAY_SD" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="42" author="rm">
+        <createTable tableName="DM_NGANHKT_0002">
+            <column name="ID" type="VARCHAR(20)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_NGANHKT_0002"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(20)"/>
+            <column name="MA" type="VARCHAR(20)"/>
+            <column name="TEN" type="VARCHAR(512)"/>
+            <column name="TINHTRANG" type="VARCHAR(5)"/>
+            <column name="ID_CHA" type="VARCHAR(20)"/>
+            <column name="MA_CHA" type="VARCHAR(20)"/>
+            <column name="LOAI" type="VARCHAR(5)"/>
+            <column name="START_DATE_ACTIVE" type="DATE"/>
+            <column name="END_DATE_ACTIVE" type="DATE"/>
+            <column name="CREATION_DATE" type="DATE"/>
+            <column name="CREATED_BY" type="VARCHAR(50)"/>
+            <column name="LAST_UPDATE_DATE" type="DATE"/>
+            <column name="LAST_UPDATED_BY" type="VARCHAR(50)"/>
+            <column name="VAN_BAN_BH" type="TEXT"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="MA_CU" type="VARCHAR(512)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="43" author="rm">
+        <createTable tableName="DM_NGUONCHI_0005">
+            <column name="ID" type="VARCHAR(20)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_NGUONCHI_0005"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(20)"/>
+            <column name="MA" type="VARCHAR(50)"/>
+            <column name="TEN" type="VARCHAR(512)"/>
+            <column name="TINHTRANG" type="VARCHAR(10)"/>
+            <column name="ID_CHA" type="VARCHAR(20)"/>
+            <column name="MA_CHA" type="VARCHAR(50)"/>
+            <column name="LOAI" type="VARCHAR(10)"/>
+            <column name="START_DATE_ACTIVE" type="DATE"/>
+            <column name="END_DATE_ACTIVE" type="DATE"/>
+            <column name="CREATION_DATE" type="DATE"/>
+            <column name="CREATED_BY" type="VARCHAR(100)"/>
+            <column name="LAST_UPDATE_DATE" type="DATE"/>
+            <column name="LAST_UPDATED_BY" type="VARCHAR(100)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="MA_CU" type="VARCHAR(50)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="44" author="rm">
+        <createTable tableName="DM_NHPHT_0015">
+            <column name="ID" type="VARCHAR(20)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_NHPHT_0015"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(20)"/>
+            <column name="MA_NH" type="VARCHAR(50)"/>
+            <column name="MA_TINH" type="VARCHAR(10)"/>
+            <column name="MA_HUYEN" type="VARCHAR(10)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="TINH_TRANG" type="VARCHAR(5)"/>
+            <column name="START_DATE_ACTIVE" type="DATE"/>
+            <column name="END_DATE_ACTIVE" type="DATE"/>
+            <column name="CREATION_DATE" type="DATE"/>
+            <column name="CREATED_BY" type="VARCHAR(100)"/>
+            <column name="LAST_UPDATE_DATE" type="DATE"/>
+            <column name="LAST_UPDATED_BY" type="VARCHAR(100)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="MA_CU" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="45" author="rm">
+        <createTable tableName="DM_NHUNT_0014">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_NHUNT_0014"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)"/>
+            <column name="MA_NH" type="VARCHAR(255)"/>
+            <column name="MA_TINH" type="VARCHAR(255)"/>
+            <column name="MA_HUYEN" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="TINH_TRANG" type="INT"/>
+            <column name="START_DATE_ACTIVE" type="DATE"/>
+            <column name="END_DATE_ACTIVE" type="DATE"/>
+            <column name="CREATION_DATE" type="DATE"/>
+            <column name="CREATED_BY" type="VARCHAR(255)"/>
+            <column name="LAST_UPDATE_DATE" type="DATE"/>
+            <column name="LAST_UPDATED_BY" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="MA_CU" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="46" author="rm">
+        <createTable tableName="DM_NVCHI_0007">
+            <column name="ID" type="VARCHAR(20)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_NVCHI_0007"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(20)"/>
+            <column name="MA" type="VARCHAR(50)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="TINHTRANG" type="VARCHAR(10)"/>
+            <column name="GHI_CHU" type="VARCHAR(512)"/>
+            <column name="START_DATE_ACTIVE" type="DATE"/>
+            <column name="END_DATE_ACTIVE" type="DATE"/>
+            <column name="CREATION_DATE" type="DATE"/>
+            <column name="CREATED_BY" type="VARCHAR(100)"/>
+            <column name="LAST_UPDATE_DATE" type="DATE"/>
+            <column name="LAST_UPDATED_BY" type="VARCHAR(100)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="MA_CU" type="VARCHAR(50)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="47" author="rm">
+        <createTable tableName="DM_QTCNNNNS_0018">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_QTCNNNNS_0018"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)"/>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="MA_CQT" type="VARCHAR(255)"/>
+            <column name="LOAIDV_MA" type="VARCHAR(255)"/>
+            <column name="LOAIDV_TEN" type="VARCHAR(255)"/>
+            <column name="CAPDT" type="INT"/>
+            <column name="CHUONG" type="VARCHAR(255)"/>
+            <column name="CCH_TEN" type="VARCHAR(255)"/>
+            <column name="LHDV_MA" type="VARCHAR(255)"/>
+            <column name="LHDV_TEN" type="VARCHAR(255)"/>
+            <column name="SOQD_TL" type="VARCHAR(255)"/>
+            <column name="NGAY_TL" type="DATE"/>
+            <column name="COQUAN_TL" type="VARCHAR(255)"/>
+            <column name="DVCT_MA" type="VARCHAR(255)"/>
+            <column name="DVCT_TEN" type="VARCHAR(255)"/>
+            <column name="DVQLTT_MA" type="VARCHAR(255)"/>
+            <column name="DVQLTT_TEN" type="VARCHAR(255)"/>
+            <column name="DBN_MA" type="VARCHAR(255)"/>
+            <column name="DBN_TEN" type="VARCHAR(255)"/>
+            <column name="DIACHI" type="VARCHAR(255)"/>
+            <column name="DVDTCT" type="INT"/>
+            <column name="DVDTCD" type="INT"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGUOI_TAO" type="VARCHAR(255)"/>
+            <column name="NGAY_SUA" type="DATE"/>
+            <column name="NGUOI_SUA" type="VARCHAR(255)"/>
+            <column name="TRANGTHAI_MA" type="VARCHAR(255)"/>
+            <column name="TRANGTHAI_CU" type="VARCHAR(255)"/>
+            <column name="NGAY_DMO" type="DATE"/>
+            <column name="TRANGTHAI_DM" type="INT"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="48" author="rm">
+        <createTable tableName="DM_QUY_0010">
+            <column name="ID" type="VARCHAR(20)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_QUY_0010"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(20)"/>
+            <column name="MA" type="VARCHAR(50)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="TINHTRANG" type="VARCHAR(10)"/>
+            <column name="GHI_CHU" type="VARCHAR(512)"/>
+            <column name="START_DATE_ACTIVE" type="DATE"/>
+            <column name="END_DATE_ACTIVE" type="DATE"/>
+            <column name="CREATION_DATE" type="DATE"/>
+            <column name="CREATED_BY" type="VARCHAR(100)"/>
+            <column name="LAST_UPDATE_DATE" type="DATE"/>
+            <column name="LAST_UPDATED_BY" type="VARCHAR(100)"/>
+            <column name="VAN_BAN_BH" type="TEXT"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="MA_CU" type="VARCHAR(50)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="49" author="rm">
+        <createTable tableName="DM_TCTY_NN_0047">
+            <column name="ID" type="VARCHAR(50)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_TCTY_NN_0047"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(50)"/>
+            <column name="DIA_CHI" type="VARCHAR(512)"/>
+            <column name="GHI_CHU" type="VARCHAR(512)"/>
+            <column name="HIEU_LUC" type="VARCHAR(5)"/>
+            <column name="MA" type="VARCHAR(50)"/>
+            <column name="ID_CHA" type="VARCHAR(50)"/>
+            <column name="MA_CHA" type="VARCHAR(50)"/>
+            <column name="MASOTHUE" type="VARCHAR(50)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_HL" type="DATE"/>
+            <column name="NGAY_KT" type="DATE"/>
+            <column name="NGAY_SD" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="TEN_VTAT" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="TEXT"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="50" author="rm">
+        <createTable tableName="DM_THAMDINHVIEN_0045">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_THAMDINHVIEN_0045"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="GHI_CHU" type="VARCHAR(255)"/>
+            <column name="GIOI_TINH" type="INT"/>
+            <column name="HIEU_LUC" type="INT"/>
+            <column name="BAN_THOIGIAN" type="INT"/>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="ID_CTY" type="VARCHAR(255)"/>
+            <column name="MA_CTY" type="VARCHAR(255)"/>
+            <column name="NAM_SINH" type="INT"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_CAP" type="DATE"/>
+            <column name="NGAY_HL" type="DATE"/>
+            <column name="NGAY_KT" type="DATE"/>
+            <column name="NGAY_PS" type="DATE"/>
+            <column name="NGAY_SD" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="QUE_QUAN" type="VARCHAR(255)"/>
+            <column name="SO_THE" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="51" author="rm">
+        <createTable tableName="DM_TIGIA_0013">
+            <column name="ID" type="VARCHAR(20)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_TIGIA_0013"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(20)"/>
+            <column name="MA_NGOAI_TE" type="VARCHAR(10)"/>
+            <column name="NGAY" type="VARCHAR(8)"/>
+            <column name="THANG" type="VARCHAR(6)"/>
+            <column name="LOAI" type="VARCHAR(5)"/>
+            <column name="TY_GIA" type="VARCHAR(20)"/>
+            <column name="TINH_TRANG" type="VARCHAR(5)"/>
+            <column name="START_DATE_ACTIVE" type="DATE"/>
+            <column name="END_DATE_ACTIVE" type="DATE"/>
+            <column name="CREATION_DATE" type="DATE"/>
+            <column name="CREATED_BY" type="VARCHAR(100)"/>
+            <column name="LAST_UPDATE_DATE" type="DATE"/>
+            <column name="LAST_UPDATED_BY" type="VARCHAR(100)"/>
+            <column name="VAN_BAN_BH" type="TEXT"/>
+            <column name="NGAY_VB" type="DATE"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="52" author="rm">
+        <createTable tableName="DM_TKKT_0011">
+            <column name="ID" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_TKKT_0011"/>
+            </column>
+            <column name="IDBANGHI" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="MA" type="VARCHAR(255)"/>
+            <column name="TEN" type="VARCHAR(255)"/>
+            <column name="TINHTRANG" type="INT"/>
+            <column name="LOAI" type="VARCHAR(255)"/>
+            <column name="CAP" type="VARCHAR(255)"/>
+            <column name="ID_CHA" type="VARCHAR(255)"/>
+            <column name="MA_CHA" type="VARCHAR(255)"/>
+            <column name="TKTN_TG" type="VARCHAR(255)"/>
+            <column name="MALOAI_DT" type="VARCHAR(255)"/>
+            <column name="START_DATE_ACTIVE" type="DATE"/>
+            <column name="END_DATE_ACTIVE" type="DATE"/>
+            <column name="CREATION_DATE" type="DATE"/>
+            <column name="CREATED_BY" type="VARCHAR(255)"/>
+            <column name="LAST_UPDATE_DATE" type="DATE"/>
+            <column name="LAST_UPDATED_BY" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="MA_CU" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="53" author="rm">
+        <createTable tableName="DM_TKT_0032">
+            <column name="IDBANGHI" type="VARCHAR(20)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_TKT_0032"/>
+            </column>
+            <column name="MA_TOKHAI" type="VARCHAR(50)"/>
+            <column name="TEN_TOKHAI" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="TEXT"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_SUA" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGAY_HLUC_TU" type="DATE"/>
+            <column name="NGAY_HLUC_DEN" type="DATE"/>
+            <column name="PBAN" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="54" author="rm">
+        <createTable tableName="DM_TTMST_0029">
+            <column name="IDBANGHI" type="VARCHAR(10)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DM_TTMST_0029"/>
+            </column>
+            <column name="MA_TTHAI" type="VARCHAR(10)"/>
+            <column name="TEN_TTHAI" type="VARCHAR(255)"/>
+            <column name="VAN_BAN_BH" type="VARCHAR(255)"/>
+            <column name="NGAY_VB" type="DATE"/>
+            <column name="NGAY_TAO" type="DATE"/>
+            <column name="NGUOI_TAO" type="VARCHAR(100)"/>
+            <column name="NGAY_SUA" type="DATE"/>
+            <column name="NGUOI_SUA" type="VARCHAR(100)"/>
+            <column name="NGAY_DBO" type="DATE"/>
+            <column name="NGAY_HLUC_TU" type="DATE"/>
+            <column name="NGAY_HLUC_DEN" type="DATE"/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

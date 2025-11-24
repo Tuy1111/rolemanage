@@ -5,6 +5,7 @@ import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vn.rm.view.rolemanage.service.RoleManagerService;
 import io.jmix.flowui.component.grid.DataGrid;
@@ -19,6 +20,8 @@ import io.jmix.securityflowui.view.resourcepolicy.AttributeResourceModel;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 @FragmentDescriptor("entities-fragment.xml")
 public class EntitiesFragment extends Fragment<VerticalLayout> {
@@ -39,26 +42,35 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
     @ViewComponent
     private Span attrEntityLabel;
 
-
     @Autowired
     private RoleManagerService roleManagerService;
 
+    // Headers Entity
     private Checkbox headerAllowAllCb;
     private Checkbox headerCreateCb;
     private Checkbox headerReadCb;
     private Checkbox headerUpdateCb;
     private Checkbox headerDeleteCb;
 
+    // Headers Attribute
     private Checkbox headerAttrViewCb;
     private Checkbox headerAttrModifyCb;
 
+    // Flags tránh loop
     private boolean updatingHeaderFromRows = false;
     private boolean updatingAttrHeaderFromRows = false;
-
-
-    private final Map<String, List<AttributeResourceModel>> attrCache = new HashMap<>();
     private boolean syncingAttrSummary = false;
 
+    // Caches
+    private final Map<String, List<AttributeResourceModel>> attrCache = new HashMap<>();
+    private final Map<String, Checkbox> entityCellCache = new HashMap<>();
+
+    // Cache text field attributes summary để update ko cần reload grid
+    private final Map<String, TextField> entityAttrFieldCache = new HashMap<>();
+
+    // ========================================================================
+    // Lifecycle
+    // ========================================================================
 
     @Subscribe
     public void onReady(Fragment.ReadyEvent event) {
@@ -91,7 +103,6 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         loadAttributesForEntity(row.getEntityName());
     }
 
-
     public void initPolicies(Collection<ResourcePolicyModel> policies) {
         if (policies != null) {
             resourcePoliciesDc.setItems(new ArrayList<>(policies));
@@ -112,13 +123,16 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         refreshMatrixFromPolicies();
     }
 
-
     private void refreshMatrixFromPolicies() {
         List<EntityMatrixRow> rows = new ArrayList<>(entityMatrixDc.getItems());
         Collection<ResourcePolicyModel> policies =
                 Optional.ofNullable(resourcePoliciesDc.getItems()).orElseGet(List::of);
 
         roleManagerService.updateEntityMatrix(rows, policies, attrCache);
+
+        // CLEAR cache trước khi gán list mới để tránh leak memory/component cũ
+        entityCellCache.clear();
+        entityAttrFieldCache.clear();
 
         entityMatrixDc.setItems(rows);
         updateHeaderAllowAllFromRows();
@@ -129,9 +143,9 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         }
     }
 
-    // ========================= Matrix: Entities grid ========================
-
-    // ---------------------------- Entity header -----------------------------
+    // ========================================================================
+    // Matrix: Entities grid - Header
+    // ========================================================================
 
     protected void initEntityHeader() {
         HeaderRow row = entityMatrixTable.appendHeaderRow();
@@ -139,148 +153,84 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         DataGrid.Column<EntityMatrixRow> entityCol = entityMatrixTable.getColumns().isEmpty()
                 ? null
                 : entityMatrixTable.getColumns().get(0);
-        DataGrid.Column<EntityMatrixRow> allowAllCol = entityMatrixTable.getColumnByKey("allowAllCol");
-        DataGrid.Column<EntityMatrixRow> createCol = entityMatrixTable.getColumnByKey("createCol");
-        DataGrid.Column<EntityMatrixRow> readCol = entityMatrixTable.getColumnByKey("readCol");
-        DataGrid.Column<EntityMatrixRow> updateCol = entityMatrixTable.getColumnByKey("updateCol");
-        DataGrid.Column<EntityMatrixRow> deleteCol = entityMatrixTable.getColumnByKey("deleteCol");
 
-        // text "All entities (*)" dưới cột Entity
         if (entityCol != null) {
             row.getCell(entityCol).setText("All entities (*)");
         }
 
-        // ===== HEADER: ALLOW ALL =====
-        if (allowAllCol != null) {
-            headerAllowAllCb = new Checkbox();
-            headerAllowAllCb.addValueChangeListener(e -> {
-                if (updatingHeaderFromRows) {
-                    return;
-                }
-                boolean v = Boolean.TRUE.equals(e.getValue());
+        // Helper để tạo header checkbox
+        headerAllowAllCb = createHeaderCheckbox(row, "allowAllCol", (r, v) -> {
+            r.setAllowAll(v);
+            r.setCanCreate(v);
+            r.setCanRead(v);
+            r.setCanUpdate(v);
+            r.setCanDelete(v);
+        });
 
-                // snapshot
-                List<EntityMatrixRow> items = new ArrayList<>(entityMatrixDc.getItems());
-                for (EntityMatrixRow r : items) {
-                    r.setAllowAll(v);
-                    r.setCanCreate(v);
-                    r.setCanRead(v);
-                    r.setCanUpdate(v);
-                    r.setCanDelete(v);
-                }
-                entityMatrixDc.setItems(items);
+        headerCreateCb = createHeaderCheckbox(row, "createCol", (r, v) -> {
+            r.setCanCreate(v);
+            roleManagerService.syncAllowAll(r);
+        });
 
-                if (!v) {
-                    resetAllAttributesFlags();
-                }
-                updateHeaderAllowAllFromRows();
-            });
-            row.getCell(allowAllCol).setComponent(headerAllowAllCb);
-        }
+        headerReadCb = createHeaderCheckbox(row, "readCol", (r, v) -> {
+            r.setCanRead(v);
+            roleManagerService.syncAllowAll(r);
+        });
 
-        // ===== HEADER: CREATE =====
-        if (createCol != null) {
-            headerCreateCb = new Checkbox();
-            headerCreateCb.addValueChangeListener(e -> {
-                if (updatingHeaderFromRows) {
-                    return;
-                }
+        headerUpdateCb = createHeaderCheckbox(row, "updateCol", (r, v) -> {
+            r.setCanUpdate(v);
+            roleManagerService.syncAllowAll(r);
+        });
 
-                boolean v = Boolean.TRUE.equals(e.getValue());
-                List<EntityMatrixRow> items = new ArrayList<>(entityMatrixDc.getItems());
-                for (EntityMatrixRow r : items) {
-                    r.setCanCreate(v);
-                    roleManagerService.syncAllowAll(r);
-                }
-                entityMatrixDc.setItems(items);
+        headerDeleteCb = createHeaderCheckbox(row, "deleteCol", (r, v) -> {
+            r.setCanDelete(v);
+            roleManagerService.syncAllowAll(r);
+        });
+    }
 
-                updateHeaderAllowAllFromRows();
-            });
-            row.getCell(createCol).setComponent(headerCreateCb);
-        }
+    private Checkbox createHeaderCheckbox(HeaderRow headerRow, String colKey,
+                                          BiConsumer<EntityMatrixRow, Boolean> logic) {
+        DataGrid.Column<EntityMatrixRow> col = entityMatrixTable.getColumnByKey(colKey);
+        if (col == null) return null;
 
-        // ===== HEADER: READ =====
-        if (readCol != null) {
-            headerReadCb = new Checkbox();
-            headerReadCb.addValueChangeListener(e -> {
-                if (updatingHeaderFromRows) {
-                    return;
-                }
+        Checkbox cb = new Checkbox();
+        cb.addValueChangeListener(e -> {
+            if (updatingHeaderFromRows) return;
+            if (!e.isFromClient()) return; // QUAN TRỌNG: Chỉ chạy khi user click
 
-                boolean v = Boolean.TRUE.equals(e.getValue());
-                List<EntityMatrixRow> items = new ArrayList<>(entityMatrixDc.getItems());
-                for (EntityMatrixRow r : items) {
-                    r.setCanRead(v);
-                    roleManagerService.syncAllowAll(r);
-                }
-                entityMatrixDc.setItems(items);
+            boolean v = Boolean.TRUE.equals(e.getValue());
+            List<EntityMatrixRow> items = new ArrayList<>(entityMatrixDc.getItems());
 
-                updateHeaderAllowAllFromRows();
-            });
-            row.getCell(readCol).setComponent(headerReadCb);
-        }
+            for (EntityMatrixRow r : items) {
+                logic.accept(r, v);
+            }
 
-        // ===== HEADER: UPDATE =====
-        if (updateCol != null) {
-            headerUpdateCb = new Checkbox();
-            headerUpdateCb.addValueChangeListener(e -> {
-                if (updatingHeaderFromRows) {
-                    return;
-                }
+            // Nếu không checkbox "Allow All", ta cần reset thuộc tính con
+            if (cb == headerAllowAllCb && !v) {
+                resetAllAttributesFlags();
+            }
 
-                boolean v = Boolean.TRUE.equals(e.getValue());
-                List<EntityMatrixRow> items = new ArrayList<>(entityMatrixDc.getItems());
-                for (EntityMatrixRow r : items) {
-                    r.setCanUpdate(v);
-                    roleManagerService.syncAllowAll(r);
-                }
-                entityMatrixDc.setItems(items);
+            // Refresh toàn bộ bảng vì dữ liệu thay đổi hàng loạt
+            entityMatrixDc.setItems(items);
 
-                updateHeaderAllowAllFromRows();
-            });
-            row.getCell(updateCol).setComponent(headerUpdateCb);
-        }
+            // Clear cache vì bảng đã vẽ lại components mới
+            entityCellCache.clear();
 
-        // ===== HEADER: DELETE =====
-        if (deleteCol != null) {
-            headerDeleteCb = new Checkbox();
-            headerDeleteCb.addValueChangeListener(e -> {
-                if (updatingHeaderFromRows) {
-                    return;
-                }
+            updateHeaderAllowAllFromRows();
+        });
 
-                boolean v = Boolean.TRUE.equals(e.getValue());
-                List<EntityMatrixRow> items = new ArrayList<>(entityMatrixDc.getItems());
-                for (EntityMatrixRow r : items) {
-                    r.setCanDelete(v);
-                    roleManagerService.syncAllowAll(r);
-                }
-                entityMatrixDc.setItems(items);
-
-                updateHeaderAllowAllFromRows();
-            });
-            row.getCell(deleteCol).setComponent(headerDeleteCb);
-        }
+        headerRow.getCell(col).setComponent(cb);
+        return cb;
     }
 
     private void updateHeaderAllowAllFromRows() {
-        if (headerAllowAllCb == null
-                && headerCreateCb == null
-                && headerReadCb == null
-                && headerUpdateCb == null
-                && headerDeleteCb == null) {
-            return;
-        }
+        if (headerAllowAllCb == null) return;
 
         updatingHeaderFromRows = true;
         try {
             List<EntityMatrixRow> items = entityMatrixDc.getItems();
             if (items == null || items.isEmpty()) {
-                if (headerAllowAllCb != null) headerAllowAllCb.setValue(false);
-                if (headerCreateCb != null) headerCreateCb.setValue(false);
-                if (headerReadCb != null) headerReadCb.setValue(false);
-                if (headerUpdateCb != null) headerUpdateCb.setValue(false);
-                if (headerDeleteCb != null) headerDeleteCb.setValue(false);
+                setHeadersValue(false, false, false, false, false);
                 return;
             }
 
@@ -288,32 +238,87 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
             boolean allRead = items.stream().allMatch(r -> T(r.getCanRead()));
             boolean allUpdate = items.stream().allMatch(r -> T(r.getCanUpdate()));
             boolean allDelete = items.stream().allMatch(r -> T(r.getCanDelete()));
+            boolean allFull = items.stream().allMatch(r -> T(r.getAllowAll()));
 
-            if (headerCreateCb != null) headerCreateCb.setValue(allCreate);
-            if (headerReadCb != null) headerReadCb.setValue(allRead);
-            if (headerUpdateCb != null) headerUpdateCb.setValue(allUpdate);
-            if (headerDeleteCb != null) headerDeleteCb.setValue(allDelete);
+            setHeadersValue(allFull, allCreate, allRead, allUpdate, allDelete);
 
-            boolean allFull = items.stream().allMatch(r ->
-                    T(r.getCanCreate()) &&
-                            T(r.getCanRead()) &&
-                            T(r.getCanUpdate()) &&
-                            T(r.getCanDelete())
-            );
-            if (headerAllowAllCb != null) headerAllowAllCb.setValue(allFull);
         } finally {
             updatingHeaderFromRows = false;
         }
     }
 
+    private void setHeadersValue(boolean all, boolean c, boolean r, boolean u, boolean d) {
+        if (headerAllowAllCb != null) headerAllowAllCb.setValue(all);
+        if (headerCreateCb != null) headerCreateCb.setValue(c);
+        if (headerReadCb != null) headerReadCb.setValue(r);
+        if (headerUpdateCb != null) headerUpdateCb.setValue(u);
+        if (headerDeleteCb != null) headerDeleteCb.setValue(d);
+    }
+
     // ========================================================================
-    // ======================== Attribute matrix/header =======================
+    // Attribute matrix - Header
     // ========================================================================
 
-    private void updateAttrHeaderFromRows() {
-        if (headerAttrViewCb == null && headerAttrModifyCb == null) {
-            return;
+    private void initAttrHeader() {
+        HeaderRow row = attrMatrixTable.appendHeaderRow();
+        DataGrid.Column<AttributeResourceModel> attrCol = attrMatrixTable.getColumnByKey("name");
+        DataGrid.Column<AttributeResourceModel> viewCol = attrMatrixTable.getColumnByKey("viewCol");
+        DataGrid.Column<AttributeResourceModel> modifyCol = attrMatrixTable.getColumnByKey("modifyCol");
+
+        if (attrCol != null) {
+            row.getCell(attrCol).setText("All attributes (*)");
         }
+
+        if (viewCol != null) {
+            headerAttrViewCb = new Checkbox();
+            headerAttrViewCb.addValueChangeListener(e -> {
+                if (updatingAttrHeaderFromRows || !e.isFromClient()) return;
+
+                boolean v = Boolean.TRUE.equals(e.getValue());
+                List<AttributeResourceModel> items = new ArrayList<>(attrMatrixDc.getItems());
+                items.forEach(r -> {
+                    r.setView(v);
+                    if (v) r.setModify(false);
+                });
+
+                attrMatrixDc.setItems(items); // Refresh grid
+                updateAttrHeaderFromRows();
+
+                EntityMatrixRow current = entityMatrixDc.getItemOrNull();
+                if (current != null) {
+                    updateEntityAttributesSummarySafe(current.getEntityName());
+                }
+            });
+            row.getCell(viewCol).setComponent(headerAttrViewCb);
+        }
+
+        if (modifyCol != null) {
+            headerAttrModifyCb = new Checkbox();
+            headerAttrModifyCb.addValueChangeListener(e -> {
+                if (updatingAttrHeaderFromRows || !e.isFromClient()) return;
+
+                boolean v = Boolean.TRUE.equals(e.getValue());
+                List<AttributeResourceModel> items = new ArrayList<>(attrMatrixDc.getItems());
+                items.forEach(r -> {
+                    r.setModify(v);
+                    if (v) r.setView(false);
+                });
+
+                attrMatrixDc.setItems(items); // Refresh grid
+                updateAttrHeaderFromRows();
+
+                EntityMatrixRow current = entityMatrixDc.getItemOrNull();
+                if (current != null) {
+                    updateEntityAttributesSummarySafe(current.getEntityName());
+                }
+            });
+            row.getCell(modifyCol).setComponent(headerAttrModifyCb);
+        }
+        updateAttrHeaderFromRows();
+    }
+
+    private void updateAttrHeaderFromRows() {
+        if (headerAttrViewCb == null && headerAttrModifyCb == null) return;
 
         updatingAttrHeaderFromRows = true;
         try {
@@ -334,79 +339,193 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         }
     }
 
-    private void initAttrHeader() {
-        HeaderRow row = attrMatrixTable.appendHeaderRow();
+    // ========================================================================
+    // UI columns renderers (ĐÃ TỐI ƯU)
+    // ========================================================================
 
-        DataGrid.Column<AttributeResourceModel> attrCol = attrMatrixTable.getColumnByKey("name");
-        DataGrid.Column<AttributeResourceModel> viewCol = attrMatrixTable.getColumnByKey("viewCol");
-        DataGrid.Column<AttributeResourceModel> modifyCol = attrMatrixTable.getColumnByKey("modifyCol");
+    private void installMatrixColumns() {
+        // 1. ALLOW ALL COLUMN
+        DataGrid.Column<EntityMatrixRow> allowAllCol = entityMatrixTable.getColumnByKey("allowAllCol");
+        if (allowAllCol != null) {
+            allowAllCol.setRenderer(new ComponentRenderer<>(row -> {
+                String key = entityCellKey("allowAll", row);
+                // Dùng computeIfAbsent để cache hiệu quả
+                Checkbox cb = entityCellCache.computeIfAbsent(key, k -> {
+                    Checkbox newCb = new Checkbox();
+                    newCb.addValueChangeListener(e -> {
+                        if (!e.isFromClient()) return; // CHẶN LOOP
 
+                        boolean v = bool(e.getValue());
+                        row.setAllowAll(v);
+                        row.setCanCreate(v);
+                        row.setCanRead(v);
+                        row.setCanUpdate(v);
+                        row.setCanDelete(v);
+
+                        // Update trực tiếp UI checkbox hàng xóm mà KHÔNG reload grid
+                        updateSiblingCheckbox(row, "create", v);
+                        updateSiblingCheckbox(row, "read", v);
+                        updateSiblingCheckbox(row, "update", v);
+                        updateSiblingCheckbox(row, "delete", v);
+
+                        updateHeaderAllowAllFromRows();
+                    });
+                    return newCb;
+                });
+
+                // Luôn set value khi render để đảm bảo đúng state
+                cb.setValue(T(row.getAllowAll()));
+                return cb;
+            }));
+        }
+
+        // 2. OTHER PERMISSION COLUMNS (Create, Read, Update, Delete)
+        installPermissionColumn("createCol", "create", EntityMatrixRow::getCanCreate, EntityMatrixRow::setCanCreate);
+        installPermissionColumn("readCol", "read", EntityMatrixRow::getCanRead, EntityMatrixRow::setCanRead);
+        installPermissionColumn("updateCol", "update", EntityMatrixRow::getCanUpdate, EntityMatrixRow::setCanUpdate);
+        installPermissionColumn("deleteCol", "delete", EntityMatrixRow::getCanDelete, EntityMatrixRow::setCanDelete);
+
+        // 3. ATTRIBUTES SUMMARY COLUMN
+        DataGrid.Column<EntityMatrixRow> attrCol = entityMatrixTable.getColumnByKey("attributesCol");
         if (attrCol != null) {
-            row.getCell(attrCol).setText("All attributes (*)");
-        }
-
-        if (viewCol != null) {
-            headerAttrViewCb = new Checkbox();
-            headerAttrViewCb.addValueChangeListener(e -> {
-                if (updatingAttrHeaderFromRows) {
-                    return;
-                }
-
-                boolean v = Boolean.TRUE.equals(e.getValue());
-                attrMatrixDc.getItems().forEach(r -> {
-                    r.setView(v);
-                    if (v) {
-                        r.setModify(false);
-                    }
+            attrCol.setRenderer(new ComponentRenderer<>(row -> {
+                String key = "attrTxt|" + row.getEntityName();
+                TextField tf = entityAttrFieldCache.computeIfAbsent(key, k -> {
+                    TextField t = new TextField();
+                    t.setWidthFull();
+                    t.setReadOnly(true);
+                    return t;
                 });
-                attrMatrixDc.setItems(new ArrayList<>(attrMatrixDc.getItems()));
-
-                updateAttrHeaderFromRows();
-
-                EntityMatrixRow current = entityMatrixDc.getItemOrNull();
-                if (current != null) {
-                    updateEntityAttributesSummarySafe(current.getEntityName());
-                }
-            });
-            row.getCell(viewCol).setComponent(headerAttrViewCb);
+                tf.setValue(Objects.toString(row.getAttributes(), ""));
+                return tf;
+            }));
         }
-
-        if (modifyCol != null) {
-            headerAttrModifyCb = new Checkbox();
-            headerAttrModifyCb.addValueChangeListener(e -> {
-                if (updatingAttrHeaderFromRows) {
-                    return;
-                }
-
-                boolean v = Boolean.TRUE.equals(e.getValue());
-                attrMatrixDc.getItems().forEach(r -> {
-                    r.setModify(v);
-                    if (v) {
-                        r.setView(false);
-                    }
-                });
-                attrMatrixDc.setItems(new ArrayList<>(attrMatrixDc.getItems()));
-
-                updateAttrHeaderFromRows();
-
-                EntityMatrixRow current = entityMatrixDc.getItemOrNull();
-                if (current != null) {
-                    updateEntityAttributesSummarySafe(current.getEntityName());
-                }
-            });
-            row.getCell(modifyCol).setComponent(headerAttrModifyCb);
-        }
-
-        updateAttrHeaderFromRows();
     }
 
-    // ========================= Attribute matrix =============================
+    private void installPermissionColumn(String colId, String keyPrefix,
+                                         Function<EntityMatrixRow, Boolean> getter,
+                                         BiConsumer<EntityMatrixRow, Boolean> setter) {
+        DataGrid.Column<EntityMatrixRow> col = entityMatrixTable.getColumnByKey(colId);
+        if (col != null) {
+            col.setRenderer(new ComponentRenderer<>(row -> {
+                String key = entityCellKey(keyPrefix, row);
+                Checkbox cb = entityCellCache.computeIfAbsent(key, k -> {
+                    Checkbox newCb = new Checkbox();
+                    newCb.addValueChangeListener(e -> {
+                        if (!e.isFromClient()) return; // CHẶN LOOP
+
+                        boolean v = bool(e.getValue());
+                        setter.accept(row, v); // Cập nhật model
+
+                        // Logic nghiệp vụ: Sync allow all
+                        roleManagerService.syncAllowAll(row);
+
+                        // Update checkbox "Allow All" của dòng này nếu nó thay đổi
+                        Checkbox allowCb = entityCellCache.get(entityCellKey("allowAll", row));
+                        if (allowCb != null) {
+                            allowCb.setValue(row.getAllowAll());
+                        }
+
+                        newCb.setIndeterminate(false);
+                        updateHeaderAllowAllFromRows();
+                        // KHÔNG gọi replaceItem(row) -> Giúp UI mượt
+                    });
+                    return newCb;
+                });
+
+                boolean val = T(getter.apply(row));
+                cb.setValue(val);
+
+                // Indeterminate logic
+                if (T(row.getAllowAll()) && val) {
+                    cb.setIndeterminate(true);
+                } else {
+                    cb.setIndeterminate(false);
+                }
+                return cb;
+            }));
+        }
+    }
+
+    // Cập nhật checkbox hàng xóm trong cache mà không cần Grid render lại
+    private void updateSiblingCheckbox(EntityMatrixRow row, String type, boolean value) {
+        Checkbox cb = entityCellCache.get(entityCellKey(type, row));
+        if (cb != null) {
+            cb.setValue(value);
+            cb.setIndeterminate(false);
+        }
+    }
+
+    private void installAttrColumns() {
+        DataGrid.Column<AttributeResourceModel> nameCol = attrMatrixTable.getColumnByKey("attribute");
+
+        if (nameCol != null) {
+            nameCol.setRenderer(new ComponentRenderer<>(row -> {
+                var span = new Span();
+
+                String caption = Strings.nullToEmpty(row.getName());
+                System.out.println(caption);
+
+                span.setText(caption);
+                return span;
+            }));
+        }
+
+        // 2. Cột View (Giữ nguyên)
+        installAttrCheckboxColumn("viewCol", AttributeResourceModel::getView, (row, v) -> {
+            row.setView(v);
+            if (v) row.setModify(false);
+        });
+
+        // 3. Cột Modify (Giữ nguyên)
+        installAttrCheckboxColumn("modifyCol", AttributeResourceModel::getModify, (row, v) -> {
+            row.setModify(v);
+            if (v) row.setView(false);
+        });
+    }
+
+    private void installAttrCheckboxColumn(String colId, Function<AttributeResourceModel, Boolean> getter,
+                                           BiConsumer<AttributeResourceModel, Boolean> setter) {
+        DataGrid.Column<AttributeResourceModel> col = attrMatrixTable.getColumnByKey(colId);
+        if (col != null) {
+            col.setRenderer(new ComponentRenderer<>(row -> {
+                Checkbox cb = new Checkbox();
+                cb.setValue(T(getter.apply(row)));
+
+                cb.addValueChangeListener(e -> {
+                    if (!e.isFromClient()) return; // CHẶN LOOP
+
+                    boolean v = T(e.getValue());
+                    setter.accept(row, v);
+
+                    // Do Attribute Grid đơn giản hơn và ít dòng hơn,
+                    // ta có thể refresh nhẹ hoặc chỉ update model.
+                    // Ở đây chỉ cần update header và summary là đủ.
+
+                    // Lưu ý: Nếu muốn update checkbox "đối lập" (View <-> Modify) ngay lập tức
+                    // thì nên dùng replaceItem hoặc cache checkbox giống bên EntityGrid.
+                    // Tuy nhiên, để đơn giản và nhanh, ta chấp nhận việc này:
+                    attrMatrixDc.replaceItem(row);
+
+                    updateAttrHeaderFromRows();
+
+                    EntityMatrixRow current = entityMatrixDc.getItemOrNull();
+                    if (current != null) {
+                        updateEntityAttributesSummarySafe(current.getEntityName());
+                    }
+                });
+                return cb;
+            }));
+        }
+    }
+
+    // ========================================================================
+    // Utils & helpers
+    // ========================================================================
 
     private void loadAttributesForEntity(String entityName) {
         if (Strings.isNullOrEmpty(entityName) || "*".equals(entityName.trim())) {
-            if (attrEntityLabel != null) {
-                attrEntityLabel.setText("");
-            }
+            if (attrEntityLabel != null) attrEntityLabel.setText("");
             attrMatrixDc.setItems(Collections.emptyList());
             return;
         }
@@ -415,260 +534,19 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
             attrEntityLabel.setText("Entity: " + entityName);
         }
 
-        // Dữ liệu attributes đã được RoleManagerService.updateEntityMatrix()
-        // preload vào attrCache dựa trên policies (nếu initPolicies đã chạy)
         List<AttributeResourceModel> rows = attrCache.get(entityName);
-
-        // Trường hợp chưa có trong cache (chưa initPolicies hoặc entity mới)
         if (rows == null) {
             rows = roleManagerService.buildAttrRowsForEntity(entityName);
             attrCache.put(entityName, rows);
         }
 
-        // Luôn truyền bản copy cho container
         attrMatrixDc.setItems(new ArrayList<>(rows));
         updateAttrHeaderFromRows();
         updateEntityAttributesSummarySafe(entityName);
     }
 
-    // ============================ UI columns ================================
-
-    private void installMatrixColumns() {
-        // ===== ALLOW ALL (theo từng entity) =====
-        DataGrid.Column<EntityMatrixRow> allowAllCol = entityMatrixTable.getColumnByKey("allowAllCol");
-        if (allowAllCol != null) {
-            allowAllCol.setRenderer(new ComponentRenderer<>(row -> {
-                Checkbox cb = new Checkbox(T(row.getAllowAll()));
-                cb.addValueChangeListener(e -> {
-                    boolean v = bool(e.getValue());
-                    row.setAllowAll(v);
-
-                    if (v) {
-                        row.setCanCreate(true);
-                        row.setCanRead(true);
-                        row.setCanUpdate(true);
-                        row.setCanDelete(true);
-                    }
-                    entityMatrixDc.replaceItem(row);
-                    updateHeaderAllowAllFromRows();
-                });
-                return cb;
-            }));
-        }
-
-        // ===== CREATE =====
-        DataGrid.Column<EntityMatrixRow> createCol = entityMatrixTable.getColumnByKey("createCol");
-        if (createCol != null) {
-            createCol.setRenderer(new ComponentRenderer<>(row -> {
-                Checkbox cb = new Checkbox();
-                boolean value = T(row.getCanCreate());
-                cb.setValue(value);
-
-                if (T(row.getAllowAll()) && value) {
-                    cb.setIndeterminate(true);
-                }
-
-                cb.addValueChangeListener(e -> {
-                    boolean v = bool(e.getValue());
-                    row.setCanCreate(v);
-                    cb.setIndeterminate(false);
-
-                    entityMatrixDc.replaceItem(row);
-                    roleManagerService.syncAllowAll(row);
-                    updateHeaderAllowAllFromRows();
-                });
-                return cb;
-            }));
-        }
-
-        // ===== READ =====
-        DataGrid.Column<EntityMatrixRow> readCol = entityMatrixTable.getColumnByKey("readCol");
-        if (readCol != null) {
-            readCol.setRenderer(new ComponentRenderer<>(row -> {
-                Checkbox cb = new Checkbox();
-                boolean value = T(row.getCanRead());
-                cb.setValue(value);
-
-                if (T(row.getAllowAll()) && value) {
-                    cb.setIndeterminate(true);
-                }
-
-                cb.addValueChangeListener(e -> {
-                    boolean v = bool(e.getValue());
-                    row.setCanRead(v);
-                    cb.setIndeterminate(false);
-
-                    entityMatrixDc.replaceItem(row);
-                    roleManagerService.syncAllowAll(row);
-                    updateHeaderAllowAllFromRows();
-                });
-                return cb;
-            }));
-        }
-
-        // ===== UPDATE =====
-        DataGrid.Column<EntityMatrixRow> updateCol = entityMatrixTable.getColumnByKey("updateCol");
-        if (updateCol != null) {
-            updateCol.setRenderer(new ComponentRenderer<>(row -> {
-                Checkbox cb = new Checkbox();
-                boolean value = T(row.getCanUpdate());
-                cb.setValue(value);
-
-                if (T(row.getAllowAll()) && value) {
-                    cb.setIndeterminate(true);
-                }
-
-                cb.addValueChangeListener(e -> {
-                    boolean v = bool(e.getValue());
-                    row.setCanUpdate(v);
-                    cb.setIndeterminate(false);
-
-                    entityMatrixDc.replaceItem(row);
-                    roleManagerService.syncAllowAll(row);
-                    updateHeaderAllowAllFromRows();
-                });
-                return cb;
-            }));
-        }
-
-        // ===== DELETE =====
-        DataGrid.Column<EntityMatrixRow> deleteCol = entityMatrixTable.getColumnByKey("deleteCol");
-        if (deleteCol != null) {
-            deleteCol.setRenderer(new ComponentRenderer<>(row -> {
-                Checkbox cb = new Checkbox();
-                boolean value = T(row.getCanDelete());
-                cb.setValue(value);
-
-                if (T(row.getAllowAll()) && value) {
-                    cb.setIndeterminate(true);
-                }
-
-                cb.addValueChangeListener(e -> {
-                    boolean v = bool(e.getValue());
-                    row.setCanDelete(v);
-                    cb.setIndeterminate(false);
-
-                    entityMatrixDc.replaceItem(row);
-                    roleManagerService.syncAllowAll(row);
-                    updateHeaderAllowAllFromRows();
-                });
-                return cb;
-            }));
-        }
-
-        // ===== ATTRIBUTES SUMMARY =====
-        DataGrid.Column<EntityMatrixRow> attrCol = entityMatrixTable.getColumnByKey("attributesCol");
-        if (attrCol != null) {
-            attrCol.setRenderer(new ComponentRenderer<>(row -> {
-                com.vaadin.flow.component.textfield.TextField tf =
-                        new com.vaadin.flow.component.textfield.TextField();
-                tf.setWidthFull();
-                tf.setReadOnly(true);
-                tf.setValue(Objects.toString(row.getAttributes(), ""));
-                return tf;
-            }));
-        }
-    }
-
-    private void installAttrColumns() {
-        DataGrid.Column<AttributeResourceModel> nameCol = attrMatrixTable.getColumnByKey("name");
-        if (nameCol != null) {
-            nameCol.setRenderer(new ComponentRenderer<>(row -> {
-                Span span = new Span();
-
-                String caption = Optional.ofNullable(row.getCaption()).orElse("");
-                String name = Optional.ofNullable(row.getName()).orElse("");
-
-                String text = !caption.isEmpty() ? caption : name;
-                span.setText(text);
-                return span;
-            }));
-        }
-
-        DataGrid.Column<AttributeResourceModel> viewCol = attrMatrixTable.getColumnByKey("viewCol");
-        if (viewCol != null) {
-            viewCol.setRenderer(new ComponentRenderer<>(row -> {
-                Checkbox cb = new Checkbox();
-
-                boolean value = T(row.getView());
-                cb.setValue(value);
-
-                if (headerAttrViewCb != null
-                        && Boolean.TRUE.equals(headerAttrViewCb.getValue())
-                        && value) {
-                    cb.setIndeterminate(true);
-                }
-
-                cb.addValueChangeListener(e -> {
-                    boolean v = T(e.getValue());
-
-                    row.setView(v);
-                    if (v) {
-                        row.setModify(false);
-                    }
-
-                    cb.setIndeterminate(false);
-
-                    attrMatrixDc.replaceItem(row);
-                    attrMatrixDc.setItems(new ArrayList<>(attrMatrixDc.getItems()));
-
-                    updateAttrHeaderFromRows();
-
-                    EntityMatrixRow current = entityMatrixDc.getItemOrNull();
-                    if (current != null) {
-                        updateEntityAttributesSummarySafe(current.getEntityName());
-                    }
-                });
-                return cb;
-            }));
-        }
-
-        // ===== MODIFY =====
-        DataGrid.Column<AttributeResourceModel> modifyCol = attrMatrixTable.getColumnByKey("modifyCol");
-        if (modifyCol != null) {
-            modifyCol.setRenderer(new ComponentRenderer<>(row -> {
-                Checkbox cb = new Checkbox();
-
-                boolean value = T(row.getModify());
-                cb.setValue(value);
-
-                if (headerAttrModifyCb != null
-                        && Boolean.TRUE.equals(headerAttrModifyCb.getValue())
-                        && value) {
-                    cb.setIndeterminate(true);
-                }
-
-                cb.addValueChangeListener(e -> {
-                    boolean v = T(e.getValue());
-
-                    row.setModify(v);
-                    if (v) {
-                        row.setView(false);
-                    }
-
-                    cb.setIndeterminate(false);
-
-                    attrMatrixDc.replaceItem(row);
-                    attrMatrixDc.setItems(new ArrayList<>(attrMatrixDc.getItems()));
-
-                    updateAttrHeaderFromRows();
-
-                    EntityMatrixRow current = entityMatrixDc.getItemOrNull();
-                    if (current != null) {
-                        updateEntityAttributesSummarySafe(current.getEntityName());
-                    }
-                });
-                return cb;
-            }));
-        }
-    }
-
-    // ======================= Utils & helpers ================================
-
     private void updateEntityAttributesSummarySafe(String entityName) {
-        if (syncingAttrSummary) {
-            return;
-        }
+        if (syncingAttrSummary) return;
         try {
             syncingAttrSummary = true;
             updateEntityAttributesSummary(entityName);
@@ -684,7 +562,57 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
                 attrMatrixDc.getItems(),
                 attrCache
         );
-        entityMatrixDc.setItems(new ArrayList<>(entityMatrixDc.getItems()));
+
+        TextField tf = entityAttrFieldCache.get("attrTxt|" + entityName);
+        if (tf != null) {
+            // Tìm row data
+            entityMatrixDc.getItems().stream()
+                    .filter(r -> Objects.equals(r.getEntityName(), entityName))
+                    .findFirst()
+                    .ifPresent(r -> tf.setValue(Objects.toString(r.getAttributes(), "")));
+        }
+    }
+
+    private void resetAllAttributesFlags() {
+        // 1) reset cache
+        attrCache.values().forEach(list -> {
+            for (AttributeResourceModel a : list) {
+                a.setView(false);
+                a.setModify(false);
+            }
+        });
+
+        // 2) reset grid đang hiển thị
+        List<AttributeResourceModel> current = new ArrayList<>(attrMatrixDc.getItems());
+        if (!current.isEmpty()) {
+            current.forEach(a -> {
+                a.setView(false);
+                a.setModify(false);
+            });
+            attrMatrixDc.setItems(current);
+        }
+
+        // 3) reset summary attributes
+        List<EntityMatrixRow> entities = new ArrayList<>(entityMatrixDc.getItems());
+        for (EntityMatrixRow r : entities) {
+            r.setAttributes(null);
+        }
+
+        // Clear cache components để vẽ lại từ đầu
+        entityCellCache.clear();
+        entityAttrFieldCache.clear();
+
+        entityMatrixDc.setItems(entities);
+
+        if (headerAttrViewCb != null) headerAttrViewCb.setValue(false);
+        if (headerAttrModifyCb != null) headerAttrModifyCb.setValue(false);
+    }
+
+    public List<ResourcePolicyModel> buildPoliciesFromMatrix() {
+        return roleManagerService.buildPoliciesFromMatrix(
+                new ArrayList<>(entityMatrixDc.getItems()),
+                attrCache
+        );
     }
 
     private static boolean T(Boolean b) {
@@ -695,44 +623,7 @@ public class EntitiesFragment extends Fragment<VerticalLayout> {
         return Boolean.TRUE.equals(b);
     }
 
-    /**
-     * Cho view cha gọi để build lại tập ResourcePolicyModel từ matrix.
-     */
-    public List<ResourcePolicyModel> buildPoliciesFromMatrix() {
-        return roleManagerService.buildPoliciesFromMatrix(
-                new ArrayList<>(entityMatrixDc.getItems()),
-                attrCache
-        );
-    }
-
-    private void resetAllAttributesFlags() {
-        // 1) reset trong cache
-        attrCache.values().forEach(list -> {
-            for (AttributeResourceModel a : list) {
-                a.setView(false);
-                a.setModify(false);
-            }
-        });
-
-        // 2) reset grid đang hiển thị bên phải (nếu có)
-        List<AttributeResourceModel> current = new ArrayList<>(attrMatrixDc.getItems());
-        if (!current.isEmpty()) {
-            current.forEach(a -> {
-                a.setView(false);
-                a.setModify(false);
-            });
-            attrMatrixDc.setItems(current);
-        }
-
-        // 3) reset summary attributes trên tất cả entity
-        List<EntityMatrixRow> entities = new ArrayList<>(entityMatrixDc.getItems());
-        for (EntityMatrixRow r : entities) {
-            r.setAttributes(null);
-        }
-        entityMatrixDc.setItems(entities);
-
-        // 4) reset header View/Modify của bảng attr
-        if (headerAttrViewCb != null) headerAttrViewCb.setValue(false);
-        if (headerAttrModifyCb != null) headerAttrModifyCb.setValue(false);
+    private String entityCellKey(String columnKey, EntityMatrixRow row) {
+        return columnKey + "|" + row.getEntityName() + "|" + row.getId();
     }
 }

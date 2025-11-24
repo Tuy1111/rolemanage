@@ -48,8 +48,7 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
     private DataContext dataContext;
     @ViewComponent
     private InstanceContainer<ResourceRoleModel> roleModelDc;
-    @ViewComponent
-    private CollectionContainer<ResourceRoleModel> childRolesDc;
+
     @ViewComponent
     private CollectionContainer<ResourcePolicyModel> resourcePoliciesDc;
 
