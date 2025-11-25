@@ -779,5 +779,23 @@ public class RoleManagerService {
             collectMenuItems(child, map);
         }
     }
+    public void clearIndex() {
+        leafIndex.clear();
+    }
+    public Map<String, List<PolicyGroupNode>> getLeafIndex() {
+        return leafIndex;
+    }
+    public Collection<PolicyGroupNode> getAllIndexedLeaves() {
+        List<PolicyGroupNode> result = new ArrayList<>();
+        for (List<PolicyGroupNode> list : leafIndex.values()) {
+            result.addAll(list);
+        }
+        return result;
+    }
+
+    public List<PolicyGroupNode> getNodesByKey(String key) {
+        if (key == null) return null;
+        return leafIndex.get(key);
+    }
 
 }

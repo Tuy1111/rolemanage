@@ -10,35 +10,26 @@ import io.jmix.flowui.fragment.Fragment;
 import io.jmix.flowui.fragment.FragmentDescriptor;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.view.ViewComponent;
-import io.jmix.flowui.view.ViewRegistry;
-import io.jmix.flowui.menu.MenuConfig;
-import io.jmix.flowui.menu.MenuItem;
 import io.jmix.security.model.ResourcePolicyModel;
 import io.jmix.security.model.ResourceRoleModel;
+import io.jmix.flowui.menu.MenuItem;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.core.type.AnnotationMetadata;
-import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
-import org.springframework.core.type.classreading.MetadataReader;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.util.*;
 
 @FragmentDescriptor("user-interface-fragment.xml")
 public class UserInterfaceFragment extends Fragment<VerticalLayout> {
 
-
     @ViewComponent private CollectionContainer<PolicyGroupNode> policyTreeDc;
     @ViewComponent private TreeDataGrid<PolicyGroupNode> policyTreeGrid;
     @ViewComponent private Checkbox allowAllViews;
 
     private boolean suppressAllowAllEvent = false;
-    private final Map<String, List<PolicyGroupNode>> leafIndex = new HashMap<>();
+
     @Autowired
-    private RoleManagerService  roleManagerService;
+    private RoleManagerService roleManagerService;
+
     // =====================================================================
     // INIT
     // =====================================================================
@@ -48,8 +39,8 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
         setupTreeGrid(model.getSource().name());
 
         boolean hasAllowAll = model.getResourcePolicies().stream()
-                .anyMatch(p -> "*".equals(p.getResource()) &&
-                        "ALLOW".equalsIgnoreCase(p.getEffect()));
+                .anyMatch(p -> "*".equals(p.getResource())
+                        && "ALLOW".equalsIgnoreCase(p.getEffect()));
 
         suppressAllowAllEvent = true;
         allowAllViews.setValue(hasAllowAll);
@@ -81,33 +72,63 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
 
         roleManagerService.buildMenuTree(menuRoot);
 
-        leafIndex.clear();
+        roleManagerService.clearIndex();
         roleManagerService.indexLeaves(menuRoot);
         roleManagerService.indexLeaves(viewRoot);
 
-        Set<PolicyGroupNode> initialized = new HashSet<>();
-        for (List<PolicyGroupNode> nodes : leafIndex.values()) {
-            for (PolicyGroupNode node : nodes) {
-                if (initialized.add(node)) {
-                    node.resetState();
-                }
-            }
+        // Reset state => mặc định DENY
+        for (PolicyGroupNode node : roleManagerService.getAllIndexedLeaves()) {
+            node.resetState();
         }
 
-        // Apply ALLOW from DB only
+        // ==========================================
+        // APPLY DB POLICIES (THEO RESOURCE THƯỜNG)
+        // ==========================================
         for (ResourcePolicyModel p : model.getResourcePolicies()) {
 
             if (!"ALLOW".equalsIgnoreCase(p.getEffect()))
                 continue;
 
-            String key = roleManagerService.buildLeafKey(p.getResource(), p.getAction());
-            List<PolicyGroupNode> nodes = key == null ? null : leafIndex.get(key);
+            if ("*".equals(p.getResource()))
+                continue; // skip wildcard ở đây, xử lý riêng phía dưới
+
+            List<PolicyGroupNode> nodes = roleManagerService.getNodesByKey(
+                    roleManagerService.buildLeafKey(p.getResource(), p.getAction()));
+
             if (nodes == null)
                 continue;
 
             for (PolicyGroupNode n : nodes) {
                 roleManagerService.applyState(n, true);
                 n.setDenyDefault(false);
+            }
+        }
+
+        // ==========================================
+        // 🔥 WILDCARD (*) — APPLY CHO TẤT CẢ LEAF
+        // ==========================================
+        boolean allowAllViewsDB = model.getResourcePolicies().stream()
+                .anyMatch(p -> "*".equals(p.getResource())
+                        && "view".equals(p.getAction())
+                        && "ALLOW".equals(p.getEffect()));
+
+        boolean allowAllMenusDB = model.getResourcePolicies().stream()
+                .anyMatch(p -> "*".equals(p.getResource())
+                        && "menu".equals(p.getAction())
+                        && "ALLOW".equals(p.getEffect()));
+
+        if (allowAllViewsDB || allowAllMenusDB) {
+            for (PolicyGroupNode node : roleManagerService.getAllIndexedLeaves()) {
+
+                if (allowAllViewsDB && "view".equals(node.getAction())) {
+                    roleManagerService.applyState(node, true);
+                }
+
+                if (allowAllMenusDB && "menu".equals(node.getAction())) {
+                    roleManagerService.applyState(node, true);
+                }
+
+                node.setDenyDefault(false);
             }
         }
 
@@ -141,34 +162,29 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
                 .setHeader("Action")
                 .setTextAlign(ColumnTextAlign.CENTER);
 
-        // ALLOW checkbox
+        // ALLOW
         policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (cb, node) -> {
             cb.setVisible(node.isLeaf());
             cb.setEnabled(editable);
-
             cb.setValue("ALLOW".equals(node.getEffect()));
 
             cb.addValueChangeListener(e -> {
                 if (!e.isFromClient()) return;
-
                 boolean checked = Boolean.TRUE.equals(e.getValue());
-
                 roleManagerService.syncLinkedLeaves(node, checked);
                 policyTreeGrid.getDataProvider().refreshAll();
             });
 
         })).setHeader("Allow");
 
-        // DENY checkbox (UI only)
+        // DENY
         policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (cb, node) -> {
             cb.setVisible(node.isLeaf());
             cb.setEnabled(editable);
-
             cb.setValue(!"ALLOW".equals(node.getEffect()));
 
             cb.addValueChangeListener(e -> {
                 if (!e.isFromClient()) return;
-
                 boolean checked = Boolean.TRUE.equals(e.getValue());
                 if (checked) {
                     roleManagerService.syncLinkedLeaves(node, false);
@@ -185,22 +201,21 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
     // APPLY ALLOW ALL
     // =====================================================================
     private void applyAllowAll(boolean enable) {
-
         for (PolicyGroupNode root : policyTreeDc.getItems())
             roleManagerService.applyForAll(root, enable);
 
         policyTreeGrid.getDataProvider().refreshAll();
     }
 
-
     // =====================================================================
-    // COLLECT POLICIES — only ALLOW saved
+    // COLLECT POLICIES
     // =====================================================================
     public List<ResourcePolicyModel> collectPoliciesFromTree() {
 
         List<ResourcePolicyModel> list = new ArrayList<>();
 
         if (isAllowAllViewsChecked()) {
+
             ResourcePolicyModel p = new ResourcePolicyModel();
             p.setId(UUID.randomUUID());
             p.setType("VIEW");

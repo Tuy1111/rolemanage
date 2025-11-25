@@ -61,9 +61,13 @@ public class PolicyGroupNode {
     public Boolean isLeaf() { return !group; }
 
     public void resetState() {
-        effect = null;
-        allow = false;
-        deny = false;
-        denyDefault = true; // default deny when loading from DB
+        // ❌ Không được tự gán ALLOW/DENY vì DB sẽ override sau
+
+        this.effect = null;
+        this.allow = false;
+        this.deny = true;
+
+        // annotated chỉ dùng để hiển thị, không dùng để set allow/deny mặc định
     }
+
 }
