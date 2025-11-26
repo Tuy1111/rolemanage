@@ -73,19 +73,6 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
         });
     }
 
-    public void applyForAll(PolicyGroupNode node, boolean enable) {
-
-        if (node.isLeaf()) {
-            // chỉ tick UI, không ghi model
-            node.setAllow(enable);
-            node.setDeny(false);
-            policyTreeGrid.getDataProvider().refreshItem(node);
-        }
-
-        for (PolicyGroupNode c : node.getChildren()) {
-            applyForAll(c, enable);
-        }
-    }
     private boolean isAllowAllViewsChecked() {
         return Boolean.TRUE.equals(allowAllViews.getValue());
     }
@@ -94,20 +81,27 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
 // ========================================================================
     private void applyAllowAll(boolean enable) {
 
-        // 1) Tick tất cả leaf theo enable
         for (PolicyGroupNode leaf : roleManagerService.getAllIndexedLeaves()) {
-            roleManagerService.applyState(leaf, enable);
-            leaf.setDenyDefault(false);
+
+            if (enable) {
+                // ALLOW ALL → tick allow hết
+                leaf.setEffect("ALLOW");
+                leaf.setAllow(true);
+                leaf.setDeny(false);
+
+            } else {
+                // BỎ ALLOW ALL → tất cả thành DENY (UI), không lưu DB
+                leaf.setEffect("DENY");
+                leaf.setAllow(false);
+                leaf.setDeny(true);
+            }
         }
 
-        // 2) Đồng bộ menu <-> screen (tick theo nhau)
-        for (PolicyGroupNode leaf : roleManagerService.getAllIndexedLeaves()) {
-            roleManagerService.syncLinkedLeaves(leaf, enable);
-        }
-
-        // 3) Refresh UI
         policyTreeGrid.getDataProvider().refreshAll();
     }
+
+
+
 
 
     // ========================================================================
@@ -310,35 +304,69 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
         policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (cb, node) -> {
             cb.setVisible(node.isLeaf());
             cb.setEnabled(editable);
+
+            // ALLOW là khi effect = ALLOW
             cb.setValue("ALLOW".equals(node.getEffect()));
 
             cb.addValueChangeListener(e -> {
                 if (!e.isFromClient()) return;
-                roleManagerService.syncLinkedLeaves(node, true);
+
+                boolean checked = Boolean.TRUE.equals(e.getValue());
+
+                if (checked) {
+                    // ✔ Tick Allow
+                    node.setEffect("ALLOW");
+                    node.setAllow(true);
+                    node.setDeny(false);
+                } else {
+                    // ❌ Bỏ allow → chuyển sang Deny UI
+                    node.setEffect(null);      // xoá allow DB
+                    node.setAllow(false);
+                    node.setDeny(true);        // đánh dấu UI Deny
+                }
+
                 policyTreeGrid.getDataProvider().refreshAll();
             });
+
         })).setHeader("Allow");
+
 
         // Deny
         policyTreeGrid.addColumn(new ComponentRenderer<>(Checkbox::new, (cb, node) -> {
             cb.setVisible(node.isLeaf());
             cb.setEnabled(editable);
-            cb.setValue("DENY".equals(node.getEffect()));
+
+            // Deny = effect != ALLOW (UI-only)
+            cb.setValue(!"ALLOW".equals(node.getEffect()));
 
             cb.addValueChangeListener(e -> {
                 if (!e.isFromClient()) return;
-                if (e.getValue()) {
-                    roleManagerService.applyState(node, false); // effect = DENY
-                    node.setEffect("DENY");
+
+                boolean checked = Boolean.TRUE.equals(e.getValue());
+
+                if (checked) {
+                    // ✔ Tick Deny → xoá allow
+                    node.setEffect(null);    // xoá khỏi DB
+                    node.setAllow(false);
+                    node.setDeny(true);
+
+                    // ✔ bỏ tick Allow All nếu đang bật
+                    suppressAllowAllEvent = true;
+                    allowAllViews.setValue(false);
+                    suppressAllowAllEvent = false;
+
                 } else {
-                    // neutral
-                    roleManagerService.applyState(node, false);
-                    node.setEffect(null);
+                    // ❗ Bỏ deny → luôn bật Allow
+                    node.setEffect("ALLOW");
+                    node.setAllow(true);
+                    node.setDeny(false);
                 }
+
                 policyTreeGrid.getDataProvider().refreshAll();
             });
 
         })).setHeader("Deny");
+
     }
 
 

@@ -804,10 +804,20 @@ public class RoleManagerService {
      * Cập nhật trạng thái allow/deny cho một leaf.
      */
     public void applyState(PolicyGroupNode node, boolean allow) {
-        node.setEffect(allow ? "ALLOW" : null);
-        node.setAllow(allow);
-        node.setDeny(!allow);
+
+        if (allow) {
+            // ALLOW → lưu DB
+            node.setEffect("ALLOW");
+            node.setAllow(true);
+            node.setDeny(false);
+        } else {
+            // DENY → chỉ hiển thị UI, không lưu DB
+            node.setEffect(null);   // ❗ không gán "DENY"
+            node.setAllow(false);
+            node.setDeny(true);     // ❗ UI tick deny
+        }
     }
+
     /**
      * Map viewId → danh sách MenuItem chứa view đó.
      */
