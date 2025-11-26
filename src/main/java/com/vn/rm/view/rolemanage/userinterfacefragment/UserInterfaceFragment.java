@@ -126,14 +126,6 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
 
         for (PolicyGroupNode leaf : roleManagerService.getAllIndexedLeaves())
             leaf.resetState();
-        System.out.println("=== APPLY ANNOTATED - START ===");
-        model.getResourcePolicies().forEach(p -> {
-            System.out.println("    MODEL POLICY: " + p.getType()
-                    + " | " + p.getResource()
-                    + " | " + p.getAction()
-                    + " | effect=" + p.getEffect());
-        });
-        System.out.println("=== APPLY ANNOTATED - END ===");
 
         // 1) apply annotated allow
         applyAnnotated(model);
@@ -167,7 +159,6 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
             // 1) Nếu annotated là "*" → ALLOW ALL SCREEN + MENU
             // ================================================
             if ("*".equals(p.getResource())) {
-                System.out.println("ANNOTATED * DETECTED → ENABLE ALLOW ALL");
 
                 suppressAllowAllEvent = true;
                 allowAllViews.setValue(true);

@@ -421,11 +421,6 @@ public class RoleManagerService {
                 leafIndex.computeIfAbsent(key, k -> new ArrayList<>()).add(node);
             }
         }
-        if (node.isLeaf()) {
-            System.out.println("INDEX LEAF: "
-                    + node.getResource() + "|" + node.getAction()
-                    + " --> " + node.getName());
-        }
 
         for (PolicyGroupNode c : node.getChildren())
             indexLeaves(c);

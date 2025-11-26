@@ -16,9 +16,6 @@ public interface UiMinimalRole extends UiMinimalPolicies {
 
     String CODE = "ui-minimal";
 
-    @SpecificPolicy(resources = "ui.loginToUi")
-    void login();
-
     @EntityAttributePolicy(entityClass = User.class, attributes = "*", action = EntityAttributePolicyAction.MODIFY)
     @EntityPolicy(entityClass = User.class, actions = EntityPolicyAction.ALL)
     void user();
@@ -26,4 +23,7 @@ public interface UiMinimalRole extends UiMinimalPolicies {
     @MenuPolicy(menuIds = {"ext_sec_ResourceRoleModel.list", "sec_ResourceRoleModel.list", "sec_RowLevelRoleModel.list"})
     @ViewPolicy(viewIds = {"ext_sec_ResourceRoleModel.list", "sec_ResourceRoleModel.list", "sec_RowLevelRoleModel.list"})
     void screens();
+
+    @SpecificPolicy(resources = {"ui.genericfilter.modifyJpqlCondition", "ui.genericfilter.modifyConfiguration", "ui.loginToUi", "ui.genericfilter.modifyGlobalConfiguration", "ui.showExceptionDetails"})
+    void specific();
 }

@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import com.vaadin.flow.router.Route;
 import com.vn.rm.view.main.MainView;
 import com.vn.rm.view.rolemanage.entityfragment.EntitiesFragment;
+import com.vn.rm.view.rolemanage.specificfragment.SpecificFragment;
 import com.vn.rm.view.rolemanage.userinterfacefragment.UserInterfaceFragment;
 import io.jmix.core.DataManager;
 import io.jmix.core.Metadata;
@@ -58,7 +59,8 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
 
     @ViewComponent
     private UserInterfaceFragment userInterfaceFragment;
-
+    @ViewComponent
+    private SpecificFragment specificFragment;
     // ================================ Services ===============================
 
     @Autowired
@@ -116,6 +118,11 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
         if (userInterfaceFragment != null) {
             userInterfaceFragment.initUi(model);
         }
+        if (specificFragment != null) {
+            specificFragment.initSpecific(model);
+        }
+
+
         resourcePoliciesDc.getMutableItems()
                 .removeIf(p -> "DENY".equalsIgnoreCase(p.getEffect()));
     }
@@ -204,6 +211,10 @@ public class ResourceRoleEditView extends StandardDetailView<ResourceRoleModel> 
         // --- UI & Menu fragment
         if (userInterfaceFragment != null) {
             all.addAll(userInterfaceFragment.collectPoliciesFromTree());
+        }
+// --- Specific fragment
+        if (specificFragment != null) {
+            all.addAll(specificFragment.collectSpecificPolicies());
         }
 
         // --- Làm sạch duplicates (nếu fragment trả cùng policy)
