@@ -34,8 +34,10 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
     // ========================================================================
     public void initUi(ResourceRoleModel model) {
 
+        boolean isAnnotated = model.getSource() == RoleSourceType.ANNOTATED_CLASS;
+
         // 1) Load annotated role nếu có
-        if (model.getSource() == RoleSourceType.ANNOTATED_CLASS) {
+        if (isAnnotated) {
             ResourceRole runtimeRole = roleManagerService.getRoleByCode(model.getCode());
             ResourceRoleModel annotatedModel =
                     roleManagerService.convertAnnotatedToModel(runtimeRole);
@@ -44,23 +46,25 @@ public class UserInterfaceFragment extends Fragment<VerticalLayout> {
             roleManagerService.setAnnotatedRole(null);
         }
 
-        // 2) Build UI tree (quan trọng phải làm trước tick-all)
+        // 2) Nếu annotated → disable AllowAll (disable nhưng vẫn hiển thị trạng thái)
+        allowAllViews.setEnabled(!isAnnotated);
+
+        // 3) Build UI tree
         buildTree(model);
 
-        // 3) Setup TreeGrid columns
+        // 4) Setup TreeGrid
         setupTreeGrid(model.getSource().name());
 
-        // 4) Kiểm tra xem DB role có "*" hay không
+        // 5) Check AllowAll từ DB policies
         boolean hasAllowAll = model.getResourcePolicies().stream()
                 .anyMatch(p -> "*".equals(p.getResource())
                         && ResourcePolicyEffect.ALLOW.equals(p.getEffect()));
 
-        // 5) Đặt giá trị Allow All nhưng không trigger event
         suppressAllowAllEvent = true;
-        allowAllViews.setValue(hasAllowAll);
+        allowAllViews.setValue(hasAllowAll);  // vẫn set được vì enabled/disabled ok
         suppressAllowAllEvent = false;
 
-        // 6) CUỐI CÙNG: đăng ký listener (đặt ở cuối)
+        // 6) Listener xử lý tick AllowAll
         allowAllViews.addValueChangeListener(e -> {
             if (!e.isFromClient() || suppressAllowAllEvent)
                 return;
