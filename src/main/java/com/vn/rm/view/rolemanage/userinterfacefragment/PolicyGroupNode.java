@@ -1,6 +1,7 @@
 package com.vn.rm.view.rolemanage.userinterfacefragment;
 
 import io.jmix.core.metamodel.annotation.JmixEntity;
+import io.jmix.security.model.ResourceRoleModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,8 +20,8 @@ public class PolicyGroupNode {
     private Boolean allow;
     private Boolean deny;
 
-    // dùng để phân biệt Deny mặc định UI và Deny thật
     private Boolean denyDefault = false;
+    private Boolean annotated = false;  // <-- BẠN XOÁ MẤT
 
     private PolicyGroupNode parent;
     private List<PolicyGroupNode> children = new ArrayList<>();
@@ -30,6 +31,9 @@ public class PolicyGroupNode {
         this.group = group;
     }
 
+
+    public Boolean getAnnotated() { return annotated; }
+    public void setAnnotated(Boolean annotated) { this.annotated = annotated; }
     public String getName() { return name; }
     public Boolean getGroup() { return group; }
     public String getType() { return type; }
@@ -61,13 +65,16 @@ public class PolicyGroupNode {
     public Boolean isLeaf() { return !group; }
 
     public void resetState() {
-        // ❌ Không được tự gán ALLOW/DENY vì DB sẽ override sau
-
-        this.effect = null;
-        this.allow = false;
-        this.deny = true;
-
-        // annotated chỉ dùng để hiển thị, không dùng để set allow/deny mặc định
+        // ✔ KHÔNG được deny
+        if (Boolean.TRUE.equals(annotated)) {
+            // Annotated → ALLOW
+            this.effect = "ALLOW";
+            this.allow = true;
+        } else {
+            // Không annotated → TRẠNG THÁI TRỐNG (neutral)
+            this.effect = null;
+            this.allow = false;
+        }
+        this.deny = false;
     }
-
 }
