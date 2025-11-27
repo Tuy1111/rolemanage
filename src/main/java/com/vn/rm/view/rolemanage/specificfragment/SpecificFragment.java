@@ -219,6 +219,11 @@ public class SpecificFragment extends Fragment<VerticalLayout> {
                     node.setAllow(true);
                     node.setDeny(false);
                 } else {
+                    // ❌ Bỏ tick Allow → phải tắt AllowAll
+                    suppressAllowAll = true;
+                    allowAllSpecific.setValue(false);
+                    suppressAllowAll = false;
+
                     node.setEffect(null);
                     node.setAllow(false);
                     node.setDeny(true);
@@ -226,6 +231,7 @@ public class SpecificFragment extends Fragment<VerticalLayout> {
 
                 specificTree.getDataProvider().refreshAll();
             });
+
 
         })).setHeader("Allow");
 
@@ -244,10 +250,16 @@ public class SpecificFragment extends Fragment<VerticalLayout> {
                 boolean checked = Boolean.TRUE.equals(e.getValue());
 
                 if (checked) {
+
+                    suppressAllowAll = true;
+                    allowAllSpecific.setValue(false);
+                    suppressAllowAll = false;
+
                     node.setEffect(null);
                     node.setAllow(false);
                     node.setDeny(true);
-                } else {
+                }
+                else {
                     node.setEffect("ALLOW");
                     node.setAllow(true);
                     node.setDeny(false);
